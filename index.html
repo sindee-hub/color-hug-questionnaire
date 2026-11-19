@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment-Confirmed Questionnaire Report — Color Hug™</title>
+<style>
+  :root{
+    --pink:#d9a3b0; --blue:#9fb8c9; --yellow:#e3c98a; --green:#a5c2a5;
+    --ink:#3d4045; --ink-soft:#7a7f85; --line:#e7e5e0; --bg:#faf9f7; --card:#fffdfb; --accent:#8a959e;
+    --deep:#4a545c;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:Georgia,'Times New Roman',serif; background:var(--bg); color:var(--ink); line-height:1.75;}
+  .wrap{max-width:860px; margin:0 auto; padding:40px 24px 70px;}
+
+  header.app{ text-align:center; padding:26px 16px 30px; }
+  header.app h1{font-size:1.85rem; font-weight:400; letter-spacing:2px; color:var(--deep);}
+  header.app .sub{color:var(--ink-soft); font-size:.9rem; margin-top:8px; letter-spacing:1px;}
+  header.app .ornament{color:var(--accent); font-size:.85rem; margin-top:10px; letter-spacing:4px;}
+
+  section{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:34px 38px; margin-bottom:28px; box-shadow:0 1px 3px rgba(60,60,60,.04);}
+  .sec-tag{display:block; font-size:.7rem; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:10px;}
+  section h2{font-size:1.4rem; font-weight:400; margin-bottom:6px; color:var(--deep); letter-spacing:.5px;}
+  .sec-desc{color:var(--ink-soft); font-size:.92rem; margin-bottom:22px; font-style:italic;}
+
+  /* ---------- Section 1: gate ---------- */
+  .gate-box{border:1px solid var(--line); border-radius:4px; padding:24px 26px; background:#fbfaf8;}
+  .gate-note{font-size:.82rem; color:var(--ink-soft); margin-top:14px; line-height:1.6;}
+  .gate-row{display:flex; align-items:center; gap:14px; margin-top:18px; flex-wrap:wrap;}
+  button{font-family:inherit; cursor:pointer;}
+  .btn{border:1px solid var(--deep); background:var(--deep); color:#f7f5f2; border-radius:3px; padding:11px 26px; font-size:.9rem; letter-spacing:1px; transition:opacity .2s;}
+  .btn:hover{opacity:.85;}
+  .btn[disabled]{opacity:.35; cursor:not-allowed;}
+  .btn-ghost{background:transparent; color:var(--deep); border:1px solid var(--deep);}
+  .confirm-msg{font-size:.92rem; color:#5c6e62; margin-top:14px; font-style:italic;}
+
+  /* ---------- gentle acknowledgement ---------- */
+  .ack-box{border:1px solid var(--line); border-radius:4px; padding:22px 26px; margin-top:16px; background:#fbfaf8;}
+  .ack-title{font-size:1.05rem; color:var(--deep); letter-spacing:.5px; margin-bottom:10px;}
+  .ack-text{font-size:.9rem; color:var(--ink-soft); line-height:1.7;}
+  .ack-box .gate-row{margin-top:14px;}
+
+  /* ---------- Section 2: questionnaire ---------- */
+  .q-block{border-top:1px solid var(--line); padding:22px 0 8px;}
+  .q-block:first-of-type{border-top:none; padding-top:6px;}
+  .q-title{font-size:1.02rem; color:var(--deep);}
+  .q-num{color:var(--accent); font-size:.78rem; letter-spacing:2px;}
+  .cat-label{font-size:.68rem; color:var(--ink-soft); letter-spacing:2.5px; text-transform:uppercase; margin-bottom:3px;}
+  .opts{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:14px;}
+  .opt{border:1px solid var(--line); border-radius:3px; background:#fff; padding:13px 10px; text-align:center; font-size:.88rem; color:var(--ink); transition:border-color .2s, background .2s, box-shadow .2s;}
+  .opt:hover{border-color:var(--accent); box-shadow:0 1px 4px rgba(60,60,60,.08);}
+  .opt .swatch{display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:8px; vertical-align:-1px;}
+  .opt.sel{border-color:var(--deep); font-weight:bold; box-shadow:0 1px 5px rgba(60,60,60,.1);}
+  .opt.sel.pink{background:#faf1f2;} .opt.sel.blue{background:#f1f5f7;}
+  .opt.sel.yellow{background:#faf6ea;} .opt.sel.green{background:#f2f6f1;}
+  .swatch.pink{background:var(--pink);} .swatch.blue{background:var(--blue);}
+  .swatch.yellow{background:var(--yellow);} .swatch.green{background:var(--green);}
+
+  .score-bar{position:sticky; bottom:0; margin-top:16px; background:#eef4f6; border:1px solid var(--line); border-radius:10px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; font-size:.92rem;}
+  .score-total{font-size:.95rem; color:var(--ink-soft); font-style:italic;}
+  .progress-track{flex:1 1 180px; min-width:160px; height:5px; background:#dde5e8; border-radius:4px; overflow:hidden;}
+  .progress-fill{height:100%; width:0%; background:var(--accent); border-radius:4px; transition:width .3s ease;}
+
+  .q-wrap{position:relative;}
+
+  /* sealed state: questionnaire fully locked after the report is prepared */
+  #sec-quest.sealed .opt{pointer-events:none; opacity:.55;}
+  #sec-quest.sealed .score-bar{opacity:.6;}
+
+  /* ---------- Section 3: report ---------- */
+  #report-empty{color:var(--ink-soft); font-style:italic;}
+  #report-area{display:none;}
+  .rep-head{border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:22px; text-align:center;}
+  .rep-head h3{font-size:1.45rem; font-weight:400; color:var(--deep); letter-spacing:1px;}
+  .rep-head .rep-sub{color:var(--ink-soft); font-size:.88rem; margin-top:6px; font-style:italic;}
+  .rep-meta{font-size:.82rem; color:var(--ink-soft); margin-top:12px; letter-spacing:.5px;}
+  .rep-summary{background:#f7f5f2; border-left:2px solid var(--accent); padding:16px 20px; margin:0 0 8px 0; font-size:.95rem; color:var(--ink); line-height:1.8;}
+  .rep-cat{margin-top:30px;}
+  .rep-cat h4{font-size:1.12rem; font-weight:400; color:var(--deep); border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px; letter-spacing:.5px;}
+  .cat-roman{float:right; font-size:.85rem; color:var(--accent); letter-spacing:2px;}
+  .cat-sub{font-weight:normal; font-size:.82rem; color:var(--ink-soft); font-style:italic;}
+  .rep-point{margin-bottom:22px; padding-left:18px; border-left:2px solid var(--line);}
+  .rep-point.pink{border-color:var(--pink);} .rep-point.blue{border-color:var(--blue);}
+  .rep-point.yellow{border-color:var(--yellow);} .rep-point.green{border-color:var(--green);}
+  .rep-point .pt-tone{font-size:.72rem; letter-spacing:2px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:5px;}
+  .rep-point .pt-tone .swatch{width:9px; height:9px; margin-right:6px;}
+  .rep-point .pt-head{font-size:.98rem; color:var(--deep); font-weight:bold; line-height:1.6;}
+  .rep-point .pt-body{font-size:.9rem; color:var(--ink-soft); margin-top:8px;}
+  .rep-point .pt-body p{margin-bottom:8px;}
+  .rep-actions{margin-top:26px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;}
+  .rep-disclaimer{font-size:.76rem; color:var(--ink-soft); margin-top:28px; border-top:1px solid var(--line); padding-top:16px; line-height:1.7; text-align:center;}
+
+  footer{ text-align:center; color:var(--ink-soft); font-size:.75rem; padding-top:10px; letter-spacing:1px;}
+
+  .overlay{position:absolute; inset:0; background:rgba(250,249,247,.82); backdrop-filter:blur(2px); display:flex; align-items:center; justify-content:center; border-radius:4px; text-align:center; padding:20px; color:var(--ink-soft); font-style:italic; font-size:.95rem;}
+
+  /* ================= FULL REPORT PAGES ================= */
+  .rep-pages{display:flex; flex-direction:column; gap:34px;}
+  .rp{background:#fffdfa; border:1px solid var(--line); border-radius:4px; overflow:hidden; page-break-inside:avoid; break-inside:avoid;}
+  .rp img{width:100%; height:auto; display:block;}
+  .rp-pad{padding:34px 36px;}
+  .rp-cover{position:relative;}
+  .rp-cover img{width:72%; margin:0 auto; padding:30px 0 10px;}
+  .rp-cover .cover-client{position:absolute; top:24px; right:28px; text-align:right; font-size:.72rem; letter-spacing:2px; color:var(--ink-soft); text-transform:uppercase;}
+  .rp-kicker{font-size:.68rem; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:10px;}
+  .rp-title{font-size:1.7rem; font-weight:400; color:var(--deep); letter-spacing:.5px; margin-bottom:6px;}
+  .rp-sub{font-size:.9rem; color:var(--ink-soft); font-style:italic; margin-bottom:18px;}
+  .rp-body{font-size:.95rem; color:var(--ink); line-height:1.85;}
+  .rp-body p{margin-bottom:12px;}
+  .rp-body .soft{color:var(--ink-soft);}
+  .rp-hr{border:none; border-top:1px solid var(--line); margin:18px 0;}
+  .rp-h4{font-size:1.05rem; color:var(--deep); letter-spacing:.5px; margin:22px 0 8px; font-weight:400;}
+  .rp-quote{background:#f7f4f0; border-left:2px solid var(--accent); padding:14px 18px; font-style:italic; color:var(--ink-soft); font-size:.92rem; margin:14px 0;}
+  .rp-gold{color:#a4862f;}
+  .rp-violet{color:#9b7bb8;}
+  .rp-footer{border-top:1px solid var(--line); padding:12px 36px; display:flex; justify-content:space-between; font-size:.68rem; letter-spacing:1.5px; color:var(--ink-soft); text-transform:uppercase;}
+  .rp-2col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .rp-card{border:1px solid var(--line); border-radius:4px; padding:18px 20px; background:#fff;}
+  .rp-card h5{font-size:.95rem; margin-bottom:2px; font-weight:400; letter-spacing:1px;}
+  .rp-card .csub{font-size:.8rem; font-style:italic; color:var(--ink-soft); margin-bottom:10px;}
+  .rp-card ul{list-style:none; margin:0; padding:0;}
+  .rp-card li{font-size:.82rem; color:var(--ink-soft); margin-bottom:8px; line-height:1.55;}
+  .rp-card li b{color:var(--ink); display:block; font-weight:normal;}
+  .rp-card .bestline{margin-top:8px; font-size:.82rem; font-style:italic;}
+  .card-pink{background:#fdf3f4;} .card-pink h5{color:#c8798e;} .card-pink .bestline{color:#c8798e;}
+  .card-blue{background:#f1f5f9;} .card-blue h5{color:#6f94b8;} .card-blue .bestline{color:#6f94b8;}
+  .card-yellow{background:#fdf8ec;} .card-yellow h5{color:#c9a23a;} .card-yellow .bestline{color:#c9a23a;}
+  .card-green{background:#f2f7f1;} .card-green h5{color:#7ba26b;} .card-green .bestline{color:#7ba26b;}
+  .cat-page{position:relative; min-height:430px; display:flex;}
+  .cat-page .cat-img{width:52%; object-fit:cover; object-position:top;}
+  .cat-page .cat-side{flex:1; padding:44px 34px; display:flex; flex-direction:column; justify-content:center;}
+  .cat-num{font-size:3.2rem; font-weight:400; letter-spacing:2px; margin-bottom:6px;}
+  .cat-num-line{width:56px; height:1px; margin-bottom:26px;}
+  .cat-name{font-size:1.75rem; font-weight:400; color:var(--deep); line-height:1.25; margin-bottom:22px;}
+  .cat-tag{font-size:.8rem; letter-spacing:3px; text-transform:uppercase; line-height:1.8;}
+  .c1 .cat-num, .c1 .cat-num-line, .c1 .cat-tag{color:#c8798e;} .c1 .cat-num-line{background:#c8798e;}
+  .c2 .cat-num, .c2 .cat-num-line, .c2 .cat-tag{color:#7ba26b;} .c2 .cat-num-line{background:#7ba26b;}
+  .c3 .cat-num, .c3 .cat-num-line, .c3 .cat-tag{color:#6f94b8;} .c3 .cat-num-line{background:#6f94b8;}
+  .c4 .cat-num, .c4 .cat-num-line, .c4 .cat-tag{color:#c9a23a;} .c4 .cat-num-line{background:#c9a23a;}
+  .c5 .cat-num, .c5 .cat-num-line, .c5 .cat-tag{color:#8f9a82;} .c5 .cat-num-line{background:#8f9a82;}
+  .cat-foot{position:absolute; bottom:14px; left:34px; font-size:.62rem; letter-spacing:2px; color:var(--ink-soft); text-transform:uppercase;}
+  /* pie chart */
+  .pie-wrap{display:flex; align-items:center; gap:26px; flex-wrap:wrap; margin-top:10px;}
+  .pie-legend{font-size:.85rem; color:var(--ink-soft); line-height:2;}
+  .pie-legend .swatch{width:11px; height:11px; margin-right:8px;}
+  .pie-note{font-size:.85rem; color:var(--ink-soft); font-style:italic; margin-top:14px;}
+  /* insight pairs */
+  .insight-row{display:flex; gap:10px; align-items:flex-start; margin-bottom:12px;}
+  .insight-row .pairs{flex-shrink:0; white-space:nowrap;}
+  .insight-row .swatch{width:16px; height:16px; margin-right:2px;}
+  .insight-row p{margin:0; font-size:.86rem; color:var(--ink-soft); line-height:1.6;}
+  .insight-row p b{color:var(--ink);}
+  /* glance columns */
+  .glance-4{display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid var(--line); border-radius:4px; overflow:hidden; margin-top:14px;}
+  .glance-4 > div{padding:18px 14px; text-align:center; border-left:1px solid var(--line);}
+  .glance-4 > div:first-child{border-left:none;}
+  .glance-4 .g-ico{font-size:1.4rem; margin-bottom:8px;}
+  .glance-4 .g-t{font-size:.72rem; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px;}
+  .glance-4 .g-d{font-size:.78rem; color:var(--ink-soft); line-height:1.55;}
+  .g-pink .g-t{color:#c8798e;} .g-green .g-t{color:#7ba26b;} .g-blue .g-t{color:#6f94b8;} .g-yellow .g-t{color:#c9a23a;}
+  /* allowed circles (gentle awareness) */
+  .allow-row{display:flex; flex-direction:column; gap:12px; margin-top:14px;}
+  .allow-circ{border-radius:50%; width:190px; padding:26px 20px; text-align:center; font-size:.85rem; margin:0 auto; line-height:1.5;}
+  .allow-circ.pink{background:#f6dcdf; color:#a5646f;} .allow-circ.green{background:#e2ecda; color:#6f8a5e;}
+  .allow-circ.blue{background:#dbe6f0; color:#5f83a5;} .allow-circ.yellow{background:#f7ead0; color:#a5852f;}
+  /* further dive cards */
+  .dive-card{border:1px solid var(--line); border-radius:4px; padding:18px 22px; margin-top:12px; background:#fbfaf8;}
+  .dive-card .d-tag{display:inline-block; font-size:.62rem; letter-spacing:2px; color:#fff; background:var(--accent); border-radius:3px; padding:2px 10px; margin-bottom:8px; text-transform:uppercase;}
+  .dive-card .d-t{font-size:.95rem; color:var(--deep); margin-bottom:6px;}
+  .dive-card .d-d{font-size:.85rem; color:var(--ink-soft); line-height:1.7;}
+  .site-line{text-align:center; margin-top:22px; font-size:.9rem; color:var(--ink-soft); letter-spacing:1px;}
+  .site-line b{color:var(--deep); letter-spacing:2px;}
+
+  @media print{
+    body{background:#fff;}
+    .no-print{display:none !important;}
+    section{border:none; box-shadow:none; padding:0; margin-bottom:26px; page-break-inside:avoid;}
+    #sec-gate{display:none !important;}
+    #sec-report{display:block !important;}
+    .score-bar{position:static;}
+    .rep-actions{display:none;}
+    .rp{border:none; margin-bottom:0;}
+    .rep-pages{gap:0;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app">
+    <h1>Color Hug™ · The Lucky Clover</h1>
+    <div class="sub">Payment-Confirmed Questionnaire Report · Emotional Orientation Reflection</div>
+    <div class="ornament">— ❦ —</div>
+  </header>
+
+  <!-- ================= SECTION 1 : PAYMENT CONFIRMED (GATE) ================= -->
+  <section id="sec-gate">
+    <span class="sec-tag">Section One</span>
+    <h2>Payment Confirmed</h2>
+    <div class="sec-desc">A quiet moment to confirm you are ready to begin.</div>
+
+    <div class="gate-box">
+      <div id="gate-msg-default">
+        Your session has been gently activated and is ready whenever you are.
+      </div>
+      <div class="gate-row">
+        <label style="display:flex;align-items:center;gap:10px;font-size:.95rem;">
+          <input type="checkbox" id="confirm-check">
+          I am ready to continue
+        </label>
+        <button class="btn" id="unlock-btn" disabled>Begin the Reflection</button>
+      </div>
+      <div class="confirm-msg" id="gate-confirm-msg" style="display:none;">The questionnaire below is now open for you.</div>
+      <div class="gate-note">Kindly note — this is a <strong>preview experience</strong> only. Nothing is saved between visits; your reflections live on this screen alone, and this sample is not an official or paid report.</div>
+    </div>
+  </section>
+
+  <!-- ================= SECTION 2 : QUESTIONNAIRE ================= -->
+  <section id="sec-quest">
+    <span class="sec-tag">Section Two</span>
+    <h2>Questionnaire</h2>
+    <div class="sec-desc">Take a quiet moment. There is no right or wrong answer — simply choose the color you feel most drawn to in each question.</div>
+
+    <div class="q-wrap" style="position:relative;">
+      <div id="q-list"></div>
+      <div class="overlay no-print" id="q-overlay">
+        The questionnaire is resting quietly for now.<br>Please confirm the Payment Confirmed gate above, and it will open for you.
+      </div>
+      <div class="overlay no-print" id="q-overlay-final" style="display:none;">
+        <div>
+          <div>Your reflection has been prepared with care.</div>
+          <div style="font-size:.85rem; margin-top:8px;">This section now rests — your answers have been received and held.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="score-bar no-print">
+      <div class="score-total"><span id="progress-text">Your reflection begins with your first choice.</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="btn" id="gen-report" disabled>Prepare My Reflection</button>
+    </div>
+
+    <!-- Gentle acknowledgement before the report is prepared -->
+    <div class="ack-box no-print" id="ack-box" style="display:none;">
+      <div class="ack-title">Before your reflection is prepared</div>
+      <p class="ack-text">
+        Once your reading is prepared, your choices will be received as they are —
+        <strong>answers cannot be changed, and the questionnaire gently closes</strong>.
+        This allows your reflection to be held with the care and completeness it deserves.
+      </p>
+      <p class="ack-text" style="margin-top:6px;">
+        There is no rush — if you would like a moment more with your choices, they are still yours to revisit before you continue.
+      </p>
+      <div class="gate-row">
+        <label style="display:flex;align-items:center;gap:10px;font-size:.95rem;">
+          <input type="checkbox" id="ack-check">
+          I understand my answers will be final, and I am ready to receive my reflection
+        </label>
+        <button class="btn" id="ack-continue" disabled>Continue to My Reflection</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SECTION 3 : REPORT ================= -->
+  <section id="sec-report">
+    <span class="sec-tag">Section Three</span>
+    <h2>Your Reflection Report</h2>
+    <div class="sec-desc" id="sec-report-desc">Your personal reading appears here, ready whenever you have completed your choices.</div>
+
+    <div id="report-empty">Your reflection is being prepared — take your gentle time with the questions above, and your reading will appear here.</div>
+
+    <div id="report-area">
+      <div class="rep-actions no-print" style="margin-bottom:18px;">
+        <button class="btn" id="print-btn">Print This Reflection</button>
+        <button class="btn btn-ghost" id="copy-btn">Copy the Words</button>
+      </div>
+
+      <div class="rep-pages" id="rep-pages"></div>
+    </div>
+  </section>
+
+  <footer>Color Hug™ · Payment-Confirmed Questionnaire Report · A quiet preview — nothing is stored or sent.</footer>
+</div>
+
+<script>
+/* ================= DATA (extracted from the Color Hug™ Logic Engine workbook) ================= */
+const QUESTIONS = [{q:1,t:"In connection, you currently feel closer to:"},
+{q:2,t:"When someone feels distant, your inner response is closer to:"},
+{q:3,t:"In closeness, your comfort zone feels like:"},
+{q:4,t:"When things feel uncertain, you tend to lean toward:"},
+{q:5,t:"The way you hold emotional space for others feels like:"},
+{q:6,t:"When making decisions recently, your tendency is:"},
+{q:7,t:"Your current work or action rhythm feels like:"},
+{q:8,t:"When pressure builds, your natural response is:"},
+{q:9,t:"Your focus lately feels:"},
+{q:10,t:"When thinking about what’s next, your inner state is:"},
+{q:11,t:"Your emotional flow recently feels:"},
+{q:12,t:"The way you speak to yourself internally feels like:"},
+{q:13,t:"Your sense of safety currently comes from:"},
+{q:14,t:"Your relationship with control feels like:"},
+{q:15,t:"Your sensitivity to your surroundings feels:"},
+{q:16,t:"What you seem to need more of right now feels like:"},
+{q:17,t:"What gives you energy lately feels like:"},
+{q:18,t:"What feels slightly missing right now is:"},
+{q:19,t:"Your ideal state at this moment feels like:"},
+{q:20,t:"What feels slightly stuck right now is:"}];
+const COPYMAP = [{p:"A1",c:"Pink",t:"You are leaning toward connection right now.\r\nThere is a natural openness in you, a quiet willingness to feel and to respond. You tend to hold space for others in a steady and attentive way.",a:"You seem to be leaning more toward connection. There is a quiet openness in you — a willingness to feel, to notice, and to respond to what is happening between you and others. You may find yourself paying more attention to whether there is warmth, presence, or emotional engagement in the space.",b:"This sensitivity to connection is not loud, but it is steady. Even when you appear calm on the outside, there is a part of you that is quietly observing how things are flowing between you and others, noticing what feels present and what feels missing.",d:"You may not always express it directly, but there is still a part of you that hopes to feel met — to feel that your presence is acknowledged, not overlooked or left in uncertainty. That quiet hope can sit gently beneath your actions.",e:"This does not mean you are becoming dependent or overly attached. It simply reflects that emotional presence, responsiveness, and genuine connection are carrying more weight for you at this point in time."},
+{p:"A1",c:"Blue",t:"You are holding your emotional space more carefully. There is a sense of observing before stepping closer. You carry a sense of calm presence that helps things feel more stable.",a:"You are holding your space more carefully. There is a sense of pause in how you approach connection, as if you are allowing yourself time to observe rather than stepping in too quickly.",b:"This creates a more measured way of relating. You may notice that you prefer to understand the tone, the consistency, and the intention behind interactions before deciding how much of yourself to open.",d:"Underneath that pace, there is a quiet need to feel safe — not rushed, not pressured, and not required to respond before you are ready. You are allowing trust to form naturally rather than forcing it.",e:"This is not distance or emotional withdrawal. It reflects a grounded way of protecting your space, where stability and clarity matter more than speed or intensity."},
+{p:"A1",c:"Yellow",t:"Your emotional space feels more fluid and changeable. You may not want to stay in one fixed feeling for too long. There is a gentle openness in how you respond to emotional situations.",a:"Your emotional state feels more fluid and open, almost as if it is moving with the moment rather than staying fixed. You may notice yourself shifting between wanting closeness and wanting space.",b:"This creates a natural rhythm of moving in and out, depending on how things feel rather than following a strict pattern. You are responding to the energy of the moment rather than locking yourself into one position.",d:"There is a part of you that does not want to feel restricted by expectations or emotional weight. When things begin to feel too heavy or too defined, you may instinctively create space to stay comfortable.",e:"This does not mean you are avoiding connection. It reflects a need for lightness, flexibility, and the ability to stay emotionally free within your experiences."},
+{p:"A1",c:"Green",t:"You are naturally holding space for others.\r\nEven without trying, you tend to carry part of what others feel. You naturally move toward care, balance, and emotional connection.",a:"You naturally hold space for others in a quiet and steady way. There is an awareness in you that notices how people are feeling, even without them saying much.",b:"This awareness often leads you to adjust yourself slightly — softening, supporting, or staying present in a way that helps the environment feel more balanced and comfortable.",d:"It comes from a deeper desire for harmony, where things feel emotionally steady and not disrupted. You may find yourself valuing connection that feels calm, mutual, and grounded.",e:"This does not mean you are responsible for everyone. It simply reflects how attuned you are to emotional environments and how naturally you move toward care and balance."},
+{p:"A2",c:"Pink",t:"When distance appears, you tend to feel it.\r\nThere is a subtle awareness of whether connection is still present. you may feel a quiet pull to reconnect.",a:"Distance tends to stand out to you more clearly than usual. Even small shifts — like a change in tone, a delay in response, or a subtle drop in warmth — can become noticeable.",b:"This doesn’t necessarily create immediate reaction, but it does create awareness. You may find yourself quietly registering these changes and wondering what they mean beneath the surface.",d:"There is often a gentle hope that the connection is still there, even if it feels less visible in the moment. A part of you remains open to the possibility that nothing has truly changed.",e:"This does not mean you are too sensitive. It reflects how much emotional continuity and a sense of presence matter to you right now."},
+{p:"A2",c:"Blue",t:"When things feel distant, you step back and allow space.\r\nYou might less reactive, more composed. You tend to give space while still keeping a sense of connection.",a:"When distance appears, you naturally lean toward giving it space rather than closing the gap immediately. There is a sense of allowing things to settle before stepping in.",b:"This creates a calm and composed response. You may notice that you observe more than you react, letting the situation unfold instead of trying to control it.",d:"Underneath that approach is a desire to stay steady — to not be pulled too quickly into uncertainty or emotional fluctuation. You are holding your center before making any move.",e:"This is not avoidance. It reflects a grounded ability to regulate yourself and respond with clarity rather than impulse."},
+{p:"A2",c:"Yellow",t:"Distance may feel like a shift that invites reflection or adjustment.\r\nYou might tend to redirect your attention elsewhere.",a:"Distance does not tend to hold your attention for long. Instead of staying in that space, you may find yourself naturally shifting your focus toward something lighter or more engaging.",b:"This creates a sense of movement rather than stagnation. You are less likely to stay in a space that feels unclear or emotionally heavy for too long.",d:"There is a part of you that prefers not to sit in unresolved feelings, choosing instead to keep things moving so they do not become overwhelming.",e:"This does not mean the connection is unimportant. It reflects your tendency to process through motion rather than stillness."},
+{p:"A2",c:"Green",t:"You may respond by maintaining connection in a calm and steady way.",a:"When distance appears, you often feel a subtle pull to reconnect. It may show up in small ways — checking in, softening your tone, or trying to understand what shifted.",b:"This response is not always conscious. It comes from a deeper inclination to maintain connection and prevent things from drifting too far apart.",d:"You may find yourself wanting to restore a sense of ease or emotional flow between you and the other person.",e:"This does not mean everything is yours to fix. It reflects how much you value continuity, care, and emotional balance in relationships."},
+{p:"A3",c:"Pink",t:"Closeness often feels natural when there is mutual presence and care.",a:"Closeness feels especially meaningful to you. There is an openness toward warmth, attention, and the feeling of being emotionally received.",b:"This openness allows you to experience connection more fully, noticing when it feels genuine and when it does not. You are more aware of how it feels to be met.",d:"Beneath that, there is a softer desire to feel welcomed rather than kept at a distance — to feel that your presence is valued and not just tolerated.",e:"This does not mean you need more than others. It reflects how deeply you resonate with real, present connection."},
+{p:"A3",c:"Blue",t:"You may feel most comfortable when connection is steady and grounded.\r\nYou value space within connection.",a:"Closeness feels more comfortable when it develops gradually. There is a preference for space within connection, allowing you to stay grounded while relating.",b:"This creates a steady and intentional pace. You are less drawn to intensity and more drawn to consistency over time.",d:"There is a need to trust the environment before fully opening, ensuring that the connection feels stable and reliable.",e:"This is not resistance. It reflects a thoughtful approach where safety and clarity come first."},
+{p:"A3",c:"Yellow",t:"You may explore connection in a way that feels open but not fixed. You might prefer flexibility over consistency.",a:"Closeness feels best when it remains light and flexible. You are open to connection, but not when it becomes too heavy or structured.",b:"This creates a more playful and dynamic way of relating. You may move closer when it feels good, and step back when it starts to feel restrictive.",d:"There is a part of you that resists being held in something that feels too fixed or intense for too long.",e:"This does not mean you cannot be close. It reflects your need for freedom within connection."},
+{p:"A3",c:"Green",t:"You may lean into closeness through giving.\r\nConnection feels natural when you are supporting others. Connection may feel meaningful when it is balanced and supportive.",a:"Closeness often shows up through care, presence, and emotional attentiveness. You may feel connected when you are able to support or understand someone.",b:"This creates a grounded form of connection that is less about intensity and more about consistency and mutual presence.",d:"There is a deeper need for connection to feel balanced, where both sides are present and engaged.",e:"This does not mean you must always give. It reflects how you naturally experience closeness through care."},
+{p:"A4",c:"Pink",t:"Your boundaries are soft at the moment.\r\nYou may find yourself easily merging with others’ feelings.  your boundaries may stretch further than you notice.",a:"Your boundaries feel softer and more open. You may find yourself more affected by tone, emotional shifts, and the subtle dynamics around you.",b:"This openness allows you to feel more, but it can also make you more aware of changes in connection.",d:"There is a quiet inclination to stay connected rather than creating distance too quickly.",e:"This does not mean your boundaries are weak. It reflects an increased emotional openness at this time."},
+{p:"A4",c:"Blue",t:"You tend to hold your boundaries in a calm and controlled way, which clear and contained and you mostly keep your space intact.",a:"Your boundaries feel clear and well-defined. There is a sense of knowing what you allow in and what you keep out.",b:"This creates a stable internal space where you are not easily overwhelmed by external emotions.",d:"You are prioritizing balance and protecting your energy in a steady way.",e:"This is not disconnection. It reflects strong self-awareness and emotional structure."},
+{p:"A4",c:"Yellow",t:"Your boundaries may shift depending on the situation or emotional context.",a:"Your boundaries feel flexible and responsive. You adjust them based on how the situation feels rather than following a fixed rule.",b:"This allows you to stay adaptable and not feel restricted by rigid expectations.",d:"You may open up in one moment and pull back in another, depending on your comfort level.",e:"This does not mean inconsistency. It reflects your ability to stay fluid and responsive."},
+{p:"A4",c:"Green",t:"You often keep boundaries in a way that maintains harmony with others. You may be extending beyond your limits.\r\nGiving can sometimes come before your own needs.",a:"Your boundaries may extend further than you realize. You might take on emotional weight or responsibility without fully noticing it.",b:"This often comes from a desire to keep things smooth and harmonious in your environment.",d:"You may prioritize connection over your own limits without intending to.",e:"This does not mean you must carry everything. It reflects your natural tendency to care deeply."},
+{p:"A5",c:"Pink",t:"There is a quiet need for more balance between giving and receiving.",a:"There is a quiet need to feel seen, acknowledged, and emotionally received. It does not have to be loud or dramatic — just real.",b:"What matters most is the sense that your presence is noticed and that the connection feels genuine.",d:"There may be a softer longing underneath for warmth, reassurance, and emotional clarity.",e:"This does not mean you are asking for too much. It reflects your need for meaningful connection."},
+{p:"A5",c:"Blue",t:"You may be needing steadiness and emotional consistency beneath the surface.",a:"There is a need for steadiness, space, and a slower pace. Your system seems to be asking for calm rather than stimulation.",b:"This may show up as a preference for predictability and a quieter emotional environment.",d:"You are seeking a sense of safety where you do not have to react quickly or hold too much.",e:"This does not mean withdrawal. It reflects a natural move toward balance."},
+{p:"A5",c:"Yellow",t:"There may be a growing need to explore what feels right for you.",a:"There is a need for lightness and openness. You may feel more comfortable when things are not too heavy or fixed.",b:"This creates a desire for flexibility, where you can move, adjust, and not feel boxed in.",d:"You may be seeking experiences that feel easy rather than demanding.",e:"This does not mean avoidance. It reflects your need for space and ease."},
+{p:"A5",c:"Green",t:"There is a softer need for connection that feels mutual and supportive.",a:"There is a need to restore balance between giving and receiving. You may have been holding more than your share.",b:"This awareness may come quietly, as a sense that you also need support, not just to provide it.",d:"There is a softer desire to feel cared for, not only relied upon.",e:"This does not mean weakness. It reflects a move toward mutual and sustainable connection."},
+{p:"B1",c:"Pink",t:"Your decisions may be guided more by how things feel than fixed logic.",a:"Your decisions tend to follow what feels emotionally aligned. There is a quiet checking-in with yourself before moving forward.",b:"You may notice that when something feels right internally, you are more willing to take action, even if the outcome is not fully clear.",d:"There is a part of you that values how something feels just as much as what it looks like logically.",e:"This reflects a way of moving that is guided by inner resonance rather than external pressure."},
+{p:"B1",c:"Blue",t:"You tend to take time to think things through in a steady and careful way.",a:"Your decision-making feels more measured and deliberate. There is a natural pause before committing to a direction.",b:"You tend to observe, gather clarity, and understand the situation before making a move.",d:"This allows you to feel more grounded and certain in your choices.",e:"This reflects a thoughtful and steady decision rhythm that prioritizes clarity."},
+{p:"B1",c:"Yellow",t:"Your decisions may shift depending on what feels right in the moment.",a:"Your decisions feel more spontaneous and flexible. You may not always follow a fixed plan.",b:"Instead, you respond to what feels relevant in the moment, adjusting as you go.",d:"This creates a dynamic way of moving where direction can shift naturally.",e:"This reflects a flexible and adaptive decision style."},
+{p:"B1",c:"Green",t:"You often consider how your choices may affect others around you.",a:"Your decisions often include consideration for others. You are aware of how your actions affect the wider space.",b:"This can lead you to move in a way that balances your needs with those around you.",d:"There is a quiet intention to maintain harmony while still progressing forward.",e:"This reflects a relational and considerate approach to decisions."},
+{p:"B2",c:"Pink",t:"Your actions may naturally follow your emotional state.",a:"Your execution feels stronger when there is emotional meaning behind what you are doing. When something feels connected, your energy follows.",b:"You may find it easier to stay engaged when there is a sense of purpose or emotional alignment.",d:"Without that connection, your motivation may soften or drift.",e:"This reflects a pattern where action is closely tied to how something feels internally."},
+{p:"B2",c:"Blue",t:"You tend to move in a steady and consistent rhythm.",a:"Your execution tends to be steady and consistent. Once you decide on something, you are able to follow through with structure.",b:"You may prefer doing things properly rather than rushing through them.",d:"This creates a sense of reliability in how you move.",e:"This reflects a grounded and disciplined execution pattern."},
+{p:"B2",c:"Yellow",t:"Your pace may shift depending on interest, energy, or curiosity.",a:"Your execution comes in waves. There may be moments of strong momentum followed by pauses.",b:"You tend to move when energy is present rather than forcing yourself through low moments.",d:"This creates a rhythm that is not linear but still productive over time.",e:"This reflects a natural, energy-based way of working."},
+{p:"B2",c:"Green",t:"You may often act in response to what others need or expect.",a:"Your execution includes awareness of impact. You tend to consider how your actions affect others as you move.",b:"This may lead you to adjust your pace or approach to maintain balance.",d:"You are not only focused on completion, but also on how things unfold.",e:"This reflects a mindful and considerate execution style."},
+{p:"B3",c:"Pink",t:"Pressure may feel more personal or emotionally close to you.",a:"When pressure appears, you may feel it emotionally before anything else. There can be an increase in sensitivity.",b:"You might notice yourself becoming more aware of expectations or emotional weight in the situation.",d:"There is often a quiet need for reassurance or grounding in these moments.",e:"This reflects a response to pressure that is closely tied to emotional awareness."},
+{p:"B3",c:"Blue",t:"You tend to hold pressure in quietly and manage it internally.",a:"You tend to slow down under pressure rather than speed up. There is a natural move toward stabilizing yourself.",b:"You may take a step back, organize your thoughts, and approach things more carefully.",d:"This helps you maintain control without becoming overwhelmed.",e:"This reflects a calm and regulated way of handling pressure."},
+{p:"B3",c:"Yellow",t:"You may step away or create space when pressure builds up.",a:"Pressure tends to activate movement in you. You may respond by shifting quickly or trying different approaches.",b:"Instead of staying still, you look for ways to navigate out of the pressure.",d:"This creates a sense of motion rather than being stuck.",e:"This reflects an adaptive and responsive way of handling pressure."},
+{p:"B3",c:"Green",t:"You may find yourself carrying more than your share under pressure.",a:"When pressure appears, you often try to balance everything involved. You may consider multiple sides at once.",b:"This can lead you to hold more than one perspective while trying to keep things stable.",d:"There is a tendency to maintain harmony even under stress.",e:"This reflects a balancing and integrative response to pressure."},
+{p:"B4",c:"Pink",t:"Your focus may be influenced by how you feel in the moment.",a:"Your focus tends to follow emotional engagement. You are more present when something feels meaningful.",b:"When there is connection, your attention naturally deepens.",d:"Without that, your focus may drift or feel less anchored.",e:"This reflects a focus pattern guided by emotional resonance."},
+{p:"B4",c:"Blue",t:"You are able to maintain a steady and consistent focus.",a:"Your focus is steady and contained. Once you commit, you are able to stay with it.",b:"You tend to minimize distractions and keep your attention structured.",d:"This allows for deeper concentration over time.",e:"This reflects a stable and consistent focus state."},
+{p:"B4",c:"Yellow",t:"Your attention may move across different things rather than staying fixed.",a:"Your focus moves more freely. You may shift between different things rather than staying on one track.",b:"This creates variety and exploration in how you engage.",d:"You follow curiosity more than rigid structure.",e:"This reflects a flexible and open focus style."},
+{p:"B4",c:"Green",t:"Your focus may naturally shift toward others or shared situations.",a:"Your focus includes both yourself and others. You are aware of how things are moving around you.",b:"This creates a shared awareness rather than a purely individual one.",d:"You tend to adjust your attention based on what is needed in the moment.",e:"This reflects a relational and adaptive focus state."},
+{p:"B5",c:"Pink",t:"You may move forward more easily when things feel aligned emotionally.",a:"Your forward movement is guided by feeling. You tend to move toward what feels right or meaningful.",b:"There is a sense of following emotional alignment rather than forcing direction.",d:"This creates a path that feels internally coherent.",e:"This reflects a heart-led way of progressing."},
+{p:"B5",c:"Blue",t:"You tend to prefer a stable, grounded, and predictable pace.",a:"Your forward movement is steady and structured. You prefer a clear path with defined steps.",b:"You move at a pace that allows you to stay in control.",d:"This creates consistency over time.",e:"This reflects a grounded and reliable progression."},
+{p:"B5",c:"Yellow",t:"You may be exploring different directions rather than committing to one path.",a:"Your forward movement is flexible and changing. You may shift direction when new options appear.",b:"This allows you to stay responsive rather than fixed.",d:"You move with opportunity rather than strict planning.",e:"This reflects fluid and adaptive movement."},
+{p:"B5",c:"Green",t:"You may move forward through supporting or stabilizing others around you.",a:"Your forward movement includes awareness of impact. You consider how your actions affect others.",b:"This creates a balanced way of progressing that includes more than just yourself.",d:"You move with intention toward stability and harmony.",e:"This reflects a considerate and integrative direction."},
+{p:"C1",c:"Pink",t:"Your emotions feel close, even if you don’t always show them fully.",a:"Your emotional flow feels more open and active. You are connected to what you are feeling.",b:"There is a sense of allowing emotions to move rather than holding them back.",d:"This creates a deeper awareness of your internal state.",e:"This reflects an open and responsive emotional flow."},
+{p:"C1",c:"Blue",t:"Your emotional flow feels steady and contained, moving quietly within.",a:"Your emotional flow feels more contained than outwardly expressive. Even when you are feeling a lot, there is often a quiet instinct to hold it inward rather than let it spill out too quickly.",b:"This can make you appear steady on the outside, even while you are still processing things internally. You may take time to understand what you feel before showing it.",d:"There is a part of you that may prefer emotional control over emotional exposure, not because you do not feel deeply, but because holding it inward feels safer and more manageable.",e:"This does not mean you are disconnected. It reflects a way of containing emotion that protects your inner space, even when more is happening beneath the surface."},
+{p:"C1",c:"Yellow",t:"Your emotions may shift from moment to moment, changing with what you experience.",a:"Your emotional flow shifts quickly. You move through feelings rather than staying in one place.",b:"This creates a lighter and more dynamic emotional experience.",d:"You do not stay attached to one state for too long.",e:"This reflects fluid emotional movement."},
+{p:"C1",c:"Green",t:"You may find yourself sensing more than your own emotions at times.",a:"Your emotional flow is responsive to your surroundings. You are aware of both your feelings and others’.",b:"This creates a shared emotional space.",d:"You adjust based on what is happening around you.",e:"This reflects relational emotional awareness."},
+{p:"C2",c:"Pink",t:"There may be a quiet part of you that hopes to feel understood, even without needing to say everything out loud. For you, being understood often feels less about explanation, and more about being sensed.",a:"When something matters to you, your inner dialogue tends to be closely connected to emotion. You may revisit, reflect, or gently question things in order to understand where you stand.",b:"This creates an inner experience that is not only about what happened, but also about how it felt and what it meant to you on a deeper level.",d:"There may be a quieter layer within you that is not simply trying to figure things out, but is looking for a sense of reassurance, grounding, or emotional clarity.",e:"This is not overthinking. It reflects an inner dialogue that is working to make emotional sense of experience, not just logical sense of events."},
+{p:"C2",c:"Blue",t:"Your inner dialogue tends to feel calm, steady, and quietly organized. You process thoughts internally in a way that brings structure rather than overwhelm.",a:"When you think, you naturally begin to sort, arrange, and make sense of different elements, rather than letting everything remain mixed or unclear.",b:"You tend to move toward clarity and understanding, rather than staying in uncertainty.",d:"This allows your thinking to remain stable and grounded, even over time.",e:"This reflects a consistent and structured way of processing internally."},
+{p:"C2",c:"Yellow",t:"Your thoughts tend to move with flexibility, shifting with what is present rather than staying fixed in one place.",a:"When an idea arises, you may explore it in different directions instead of immediately narrowing it down.",b:"This creates an openness in your thinking, allowing multiple perspectives to exist.",d:"You are not easily attached to a single viewpoint, and can adjust as new insights appear.",e:"This reflects a fluid and adaptive thinking style that supports exploration."},
+{p:"C2",c:"Green",t:"Your inner dialogue often includes awareness of others, not just yourself. You naturally think in a way that considers relationships and shared impact.",a:"When reflecting on a situation, you may take into account how it affects different people, not only your own position.",b:"This broadens your understanding and allows you to see beyond a single perspective.",d:"You tend to process thoughts in a relational way, maintaining a sense of balance between self and others.",e:"This reflects an integrative style of thinking that connects multiple viewpoints into a more complete picture."},
+{p:"C3",c:"Pink",t:"Safety may feel connected to how you are received by others.",a:"Your sense of safety feels closely tied to emotional presence and connection. You may notice that when warmth, understanding, or responsiveness is present, your system naturally softens and settles.",b:"This creates a deeper sensitivity to how others show up — not just what they say, but how they feel in the space with you.",d:"There is a quiet layer in you that relaxes when you feel seen and emotionally received, rather than left to interpret things on your own.",e:"This does not mean you rely on others for stability. It reflects that emotional safety, for you, is deeply connected to genuine presence and connection."},
+{p:"C3",c:"Blue",t:"Safety may come from things feeling steady, clear, and predictable.",a:"Your sense of safety comes from stability, clarity, and emotional consistency. You tend to feel more at ease when things are predictable and not shifting too quickly.",b:"This allows your system to settle without needing to constantly adjust or reassess what is happening around you.",d:"There is a quiet trust that builds when things remain steady, giving you space to relax into your own rhythm.",e:"This does not mean you resist change. It reflects a preference for grounded environments where you can feel secure without needing to stay alert."},
+{p:"C3",c:"Yellow",t:"Safety may come from having space and flexibility.",a:"Your sense of safety is closely linked to freedom and flexibility. You may feel more at ease when you know you are not being restricted or held in something too fixed.",b:"This creates a feeling of lightness where you can move, adjust, or step back without pressure.",d:"There is a part of you that feels safer when there is room to shift rather than being required to stay in one emotional position.",e:"This does not mean you avoid commitment. It reflects that your system feels more secure when there is space to breathe and adapt."},
+{p:"C3",c:"Green",t:"Safety may feel present when connection feels meaningful and valued.",a:"Your sense of safety may feel closely linked to how emotionally considered you are within a space. When there is care, mutual regard, and a sense that your presence matters, your system tends to soften.",b:"This can make you more aware of whether a space feels welcoming, respectful, or emotionally balanced. Safety may not come only from structure, but from whether the emotional environment feels supportive.",d:"There may be a deeper reassurance in feeling that you are not just present, but genuinely valued — that what you bring, feel, or hold is not being ignored.",e:"This does not mean you depend on outside approval. It reflects a system that settles more easily when emotional consideration and mutual care are clearly present."},
+{p:"C4",c:"Pink",t:"You may find yourself leaning toward emotional clarity.",a:"You tend to navigate control through emotional awareness rather than rigid structure. You may find yourself responding based on how something feels rather than trying to strictly manage it.",b:"This creates a softer way of holding situations, where you allow space for things to unfold instead of forcing outcomes.",d:"There is a natural trust in your ability to sense what feels right as you move forward.",e:"This does not mean you lack direction. It reflects a more intuitive way of guiding yourself through situations."},
+{p:"C4",c:"Blue",t:"You may feel more at ease when things are structured and understood.",a:"You tend to hold control through structure, clarity, and a sense of internal order. You may feel more comfortable when things are organized and understandable.",b:"This allows you to move with confidence, knowing where you stand and what you are doing.",d:"There is a steady awareness that comes from having things in place, reducing uncertainty.",e:"This does not mean you are rigid. It reflects a grounded way of maintaining stability through clarity."},
+{p:"C4",c:"Yellow",t:"You may feel more comfortable when things are open and not fixed.",a:"You tend to hold control in a lighter and more flexible way. You may not feel the need to fix everything or define every outcome.",b:"This allows you to move with the flow of situations rather than resisting them.",d:"There is a comfort in allowing things to shift naturally without needing to hold them tightly.",e:"This does not mean you are careless. It reflects your ability to stay open and adaptive without over-controlling."},
+{p:"C4",c:"Green",t:"You may naturally take on a sense of responsibility in how things are held.",a:"You tend to balance control with awareness of others and the overall environment. You may adjust how you act based on what is happening around you.",b:"This creates a dynamic way of managing situations, where you consider both your needs and the wider context.",d:"There is a natural inclination to keep things stable without disrupting the balance.",e:"This does not mean you overextend yourself. It reflects your ability to manage situations with care and awareness."},
+{p:"C5",c:"Pink",t:"You may be open to what you feel, even in subtle ways.",a:"Your sensitivity feels heightened in an emotional and relational way. You may notice yourself picking up on subtle cues, tones, or shifts in connection.",b:"This can create a deeper awareness of how interactions feel beneath the surface.",d:"There is a quiet responsiveness in you that reacts to emotional presence more than external actions.",e:"This does not mean you are overwhelmed. It reflects a heightened emotional awareness and depth."},
+{p:"C5",c:"Blue",t:"You may gently filter what you take in, keeping things balanced.",a:"Your sensitivity feels more contained and selective. You are able to filter what you take in and what you allow to affect you.",b:"This creates a sense of steadiness where not everything reaches you deeply.",d:"There is a quiet control in how you process external input, allowing you to stay grounded.",e:"This does not mean you are disconnected. It reflects a strong ability to regulate your internal space."},
+{p:"C5",c:"Yellow",t:"Your sensitivity may shift depending on your state and environment.",a:"Your sensitivity moves quickly and lightly. You may feel things, but you do not tend to stay in them for long.",b:"This creates a fluid experience where emotions pass through rather than accumulate.",d:"There is a natural ability to release and move forward without holding too much weight.",e:"This does not mean you are detached. It reflects your ability to stay emotionally mobile."},
+{p:"C5",c:"Green",t:"You may notice yourself being aware of others’ emotional states.",a:"Your sensitivity may include more than your own feelings. You may naturally pick up on shifts in tone, tension, mood, or emotional undercurrents around you.",b:"This can create a kind of shared awareness, where you are not only responding to what is happening within you, but also to what others may be carrying nearby.",d:"There may be times when you feel something before you fully know whether it belongs to you or to the environment around you. That can make your sensitivity feel deeper and harder to separate.",e:"This does not mean you are losing yourself. It reflects a system that is highly receptive, especially in emotionally charged or relational spaces."},
+{p:"D1",c:"Pink",t:"There may be a quiet wish to feel seen and acknowledged.",a:"What you seem to be needing right now is simple, but deeply important — to feel emotionally met. Not in a dramatic way, but in a way where your presence is acknowledged and responded to.",b:"This need may show up quietly, as a sensitivity to whether someone is truly present with you or just passing through. You may notice yourself paying more attention to how people respond, not just what they say.",d:"There is a softer layer underneath that is not asking for more, but asking for something real — something that feels mutual, not one-sided.",e:"This does not mean you are lacking anything. It reflects that your system is leaning toward connection that feels genuine and emotionally present."},
+{p:"D1",c:"Blue",t:"There may be a need for space, steadiness, or a slower pace.",a:"What your system is needing now feels more grounded — a sense of steadiness, space, and emotional quiet. You may not be looking for more stimulation, but rather less pressure.",b:"This can show up as a preference for slower interactions, clearer communication, and environments that do not demand too much from you.",d:"There is a deeper need to feel that you can exist without having to constantly respond, adjust, or perform.",e:"This does not mean withdrawal. It reflects a natural movement toward restoring balance and internal stability."},
+{p:"D1",c:"Yellow",t:"There may be a need for movement, openness, or a sense of change.",a:"What you seem to be needing is a sense of lightness and room to move. You may feel less drawn to anything that feels heavy, fixed, or emotionally demanding.",b:"This can show up as a desire to keep things open, flexible, and not overly defined. You may notice yourself stepping back when something feels too intense.",d:"There is a part of you that wants to feel free within your experience, rather than held inside it.",e:"This does not mean avoidance. It reflects your system’s way of maintaining comfort through openness and ease."},
+{p:"D1",c:"Green",t:"There may be a space where receiving support feels just as meaningful as giving.",a:"What your system may be needing now is not only balance, but relief. You may have spent more time holding things together than fully noticing what that has cost you.",b:"This can show up quietly — not always as a dramatic collapse, but as a subtle tiredness, a thinner emotional margin, or a growing awareness that giving alone is no longer enough.",d:"There may be a part of you that is beginning to recognize something important: being reliable does not remove your need to be supported, received, or met in return.",e:"This does not mean you are becoming weak or needy. It reflects a system that has reached a point where mutual care matters more than carrying everything alone."},
+{p:"D2",c:"Pink",t:"Energy may feel more present when connection feels genuine.",a:"Your energy seems to be closely tied to emotional engagement. When something feels meaningful or connected, your energy naturally rises.",b:"This creates a pattern where you feel more alive and present in situations that carry emotional depth or resonance.",d:"When that sense of connection is missing, your energy may feel lower, not because you lack motivation, but because something feels incomplete.",e:"This reflects an energy source that is deeply connected to emotional alignment and presence."},
+{p:"D2",c:"Blue",t:"Energy may feel more stable when things are calm and settled.",a:"Your energy appears to come from steadiness and internal balance. You feel more supported when things are calm, clear, and not overwhelming.",b:"This allows your system to build energy gradually, rather than through bursts or pressure.",d:"There is a quiet restoration that happens when you are given space to settle into your own rhythm.",e:"This reflects an energy source that is built through consistency and stability rather than intensity."},
+{p:"D2",c:"Yellow",t:"Energy may feel lighter when there is something new or different.",a:"Your energy seems to move in a more fluid and responsive way. It rises when something feels interesting, engaging, or open.",b:"This creates moments of natural momentum, followed by periods of rest or redirection.",d:"There is a preference in your system to follow energy rather than force it, allowing movement to happen when it feels right.",e:"This reflects an energy pattern that is dynamic and responsive rather than fixed."},
+{p:"D2",c:"Green",t:"Energy may feel more balanced when connection feels mutual.",a:"Your energy appears to be connected to maintaining balance and connection in your environment. You may feel more energized when things feel aligned and smooth.",b:"This can show up as a willingness to contribute, support, or stabilize situations around you.",d:"At the same time, your energy may dip when things feel out of balance or emotionally strained.",e:"This reflects an energy source that is closely tied to harmony and relational flow."},
+{p:"D3",c:"Pink",t:"Something may feel slightly unspoken or not fully met.",a:"There seems to be a subtle gap between what you feel and what you are fully able to express or receive. You may sense something emotionally, but not always see it reflected back clearly.",b:"This can create a quiet inner tension, where you are holding a feeling that does not yet have a clear place to land.",d:"There is a part of you trying to understand whether what you feel is shared, or only held within yourself.",e:"This does not mean disconnection. It reflects a space where emotional alignment is still forming."},
+{p:"D3",c:"Blue",t:"Something may feel just a little unsettled beneath the surface.",a:"There may be a subtle sense that something is not as settled as you need it to be. Even if you are trying to remain composed, part of you may still be noticing what feels unclear, inconsistent, or slightly off.",b:"This can create an internal pause — a feeling of waiting for things to stabilize before fully relaxing, deciding, or moving more openly.",d:"There may be a part of you that is not asking for perfection, but simply for enough steadiness to stop scanning for what might shift next.",e:"There may be a part of you that is not asking for perfection, but simply for enough steadiness to stop scanning for what might shift next."},
+{p:"D3",c:"Yellow",t:"Something may feel slightly scattered or open-ended.",a:"There may be a subtle feeling that things are a little too open, too shifting, or not yet gathered into something clear. Part of you may be ready for movement, while another part still does not know where that movement is meant to go.",b:"This can create a kind of restlessness — not because nothing is happening, but because too many directions remain possible at once.",d:"There may be a part of you that wants freedom, but also wants enough shape or direction to feel that your energy is actually taking you somewhere.",e:"This does not mean you are scattered in a negative way. It reflects a system that is still moving, exploring, and trying to find where momentum can become direction."},
+{p:"D3",c:"Green",t:"Something may feel a little heavier, even if it’s not immediately clear why.",a:"There may be a subtle gap between the sense of balance you are seeking and what is actually unfolding around you. You might notice a quiet awareness that something feels slightly off, even if there is no obvious disruption or clear reason to point to.",b:"This can create a gentle but persistent inner noticing — not intense, but enough to signal that things are not fully aligned or settled in the way your system would naturally prefer.",d:"There may be a part of you that is instinctively moving toward restoring harmony, sensing where adjustments, soft shifts, or rebalancing might be needed, even before it becomes fully conscious.",e:"This does not mean something is wrong or that you are burdened in a negative way. It reflects a system that is finely attuned to imbalance, and naturally oriented toward bringing things back into a more coherent, grounded, and harmonious state over time."},
+{p:"D4",c:"Pink",t:"You may feel drawn toward connection that feels safe and easy.",a:"Your ideal state is not defined by intensity, but by a quiet sense of emotional presence where connection feels natural rather than effortful. You are more aligned with environments where responsiveness is gentle, and where interaction does not require constant interpretation or adjustment.",b:"In these spaces, you are able to feel seen in a way that does not demand over-explanation. There is a sense that your presence is already understood, or at least received with openness, allowing you to relax into the connection without needing to prove or clarify yourself.",d:"This creates a preference for relationships and environments where connection unfolds organically — not forced, not overly structured, and not filled with uncertainty. You are more at ease when interaction carries a sense of ease and quiet mutual recognition.",e:"This does not mean you avoid depth. It reflects that for you, depth comes through authenticity and emotional presence, rather than intensity or emotional demand."},
+{p:"D4",c:"Blue",t:"You may feel drawn toward a state that feels steady and grounded.",a:"Your ideal state carries a sense of internal clarity and external stability, where things feel coherent, predictable enough, and not constantly shifting. You are more aligned with environments that make sense, where you can orient yourself without needing to stay alert or recalibrate continuously.",b:"In this kind of space, your system is able to settle. There is less need to monitor, adjust, or anticipate what might change next, which allows your energy to remain stable rather than reactive.",d:"This creates a preference for calm consistency over emotional fluctuation. You are not seeking stimulation, but rather a reliable environment where your system can stay grounded and clear.",e:"This does not mean you resist change. It reflects that your system functions best when there is a baseline of steadiness that allows you to engage without disruption."},
+{p:"D4",c:"Yellow",t:"You may feel drawn toward openness and room to move freely.",a:"Your ideal state feels spacious, flexible, and not overly defined. You are more aligned with experiences that allow movement, exploration, and adjustment, rather than requiring you to stay fixed within a rigid structure.",b:"In these environments, there is a sense of lightness — where you can step in, step back, or shift direction without pressure. This allows your system to stay responsive rather than constrained.",d:"This creates a preference for flexibility over fixed expectations. You tend to move more naturally when there is room for things to evolve, rather than needing everything to be predetermined.",e:"This does not mean you lack commitment. It reflects that your system maintains stability through adaptability, allowing you to remain engaged without feeling restricted."},
+{p:"D4",c:"Green",t:"You may feel drawn toward a sense of balance in how things are shared.",a:"Your ideal state involves a mutual exchange where both sides are present, responsive, and contributing in a way that feels aligned. You are more at ease in environments where connection is not one-sided, and where emotional or energetic flow is balanced.",b:"In these spaces, there is less sense of depletion or overextension. Instead, interaction feels sustainable, where giving and receiving are naturally integrated rather than unevenly distributed.",d:"This creates a preference for relationships and environments that feel harmonious and steady, where support moves in both directions without strain.",e:"This does not mean you avoid responsibility. It reflects that your system recognizes the importance of reciprocity, and functions best when connection is shared rather than carried alone."},
+{p:"D5",c:"Pink",t:"It may feel okay to be present as you are, without needing to adjust too much.",a:"There is a subtle point of friction where your natural desire for connection meets moments of uncertainty, inconsistency, or lack of response. You may not always experience this in a direct or obvious way, but rather as a quiet internal noticing.",b:"This can create a gentle but persistent tension, where something feels slightly “off” or incomplete, even if you cannot fully explain why or where it comes from.",d:"There may be a part of you that is trying to make sense of this gap internally, choosing to hold the connection steady rather than immediately addressing or disrupting it.",e:"This does not mean you are overlooking your needs. It reflects a system that is highly sensitive to emotional alignment, and naturally attentive to how connection is felt beneath the surface."},
+{p:"D5",c:"Blue",t:"It may feel helpful to allow yourself some space without closing off.",a:"There is a point of friction where your need for stability and clarity meets situations that feel inconsistent, unclear, or not fully settled. This can make it harder for you to move forward with ease.",b:"This may create a form of internal resistance, where part of you hesitates, not out of avoidance, but because something does not yet feel grounded or reliable enough.",d:"There may be a preference within you to wait until things feel more defined, stable, or understandable before fully engaging or committing your energy.",e:"This does not mean you are rigid. It reflects a system that relies on clarity and structure in order to feel safe enough to move forward."},
+{p:"D5",c:"Yellow",t:"It may feel natural to keep moving while letting things unfold.",a:"There is a point of friction where your need for openness and freedom meets situations that feel restrictive, overly defined, or limiting in movement.",b:"This can create an instinct to step back, create distance, or shift direction, not as avoidance, but as a way to restore a sense of space.",d:"There may be a part of you that resists being held within something that does not allow flexibility, especially when your energy is still in motion or not yet ready to settle.",e:"This does not mean you are unfocused. It reflects a system that maintains alignment through movement, openness, and the ability to adjust as things evolve."},
+{p:"D5",c:"Green",t:"It may feel gentle to let things be shared, not only carried.",a:"There is a subtle point of friction where your desire for harmony and smooth connection can make it more difficult to immediately define or respond to something that feels slightly off. You may sense imbalance early, but not always move to name it right away.",b:"This can create a quiet internal discomfort, especially when one part of you wants to maintain ease and connection, while another part recognizes that something may need to shift or be addressed.",d:"There may be a softer tension between staying connected and clearly honoring your own boundaries in a way that allows you to feel fully settled.",e:"This does not mean you are failing to protect yourself. It reflects a system that values connection deeply, and is in the process of integrating that true balance also includes the ability to set clear, steady limits."},
+{p:"E1",c:"Pink",t:"Your system may currently be more guided by connection and emotional alignment.",a:"Connection is quietly guiding your direction right now. There’s a sense that what feels meaningful is becoming more important than what simply makes sense on the surface.",b:"You may find yourself naturally leaning toward choices that feel right emotionally, even if they don’t follow a strict plan. It’s less about forcing a path, and more about recognizing what resonates.",d:"Beneath that, there’s often a gentle need to live in a way that feels more aligned with your inner world, not just external expectations.",e:"This doesn’t mean you’ve lost structure. It may simply show that your direction is being shaped by what feels true to you, rather than what is traditionally expected."},
+{p:"E1",c:"Blue",t:"Your system may currently be guided by a need for stability and steadiness.",a:"Stability seems to be guiding your direction at the moment. There’s a quiet sense of grounding in how things are unfolding.",b:"You may be moving forward in a more steady and structured way, even if it feels subtle or gradual. It’s not rushed, but it’s consistent.",d:"Beneath that, there’s often an intention to build something that can last, rather than something that changes too quickly.",e:"This doesn’t mean you’re limited. It may simply show that consistency and steadiness are helping you shape a path that feels reliable and secure."},
+{p:"E1",c:"Yellow",t:"Your current state seems to be shaped by openness, movement, and a need to explore what truly fits.",a:"There’s a sense of openness shaping your direction right now. Things may feel less fixed, and more like they’re still unfolding.",b:"You might notice yourself exploring different options, without needing to decide everything immediately. It’s a phase of trying, sensing, and adjusting.",d:"Beneath that, there’s often a quiet curiosity about what truly fits you, rather than committing too early.",e:"This doesn’t mean you’re lost. It may simply show that exploration is part of how your direction is naturally forming right now."},
+{p:"E1",c:"Green",t:"Your system may be guided by a sense of responsibility, care, and connection to others.",a:"Your direction seems to be shaped by care, connection, or shared responsibilities at this time. There’s a sense that your path is not entirely separate from others.",b:"You may notice your choices being influenced by relationships, roles, or what is needed in your environment.",d:"Beneath that, there’s often a quiet intention to keep things balanced — not just for yourself, but within the space you are part of.",e:"This doesn’t mean you’re losing your own direction. It may simply show that connection and responsibility are part of how your path is unfolding right now."},
+{p:"E2",c:"Pink",t:"Beneath the surface, there may be a softer emotional layer that is shaping how you respond.",a:"There’s a softer emotional layer present beneath what’s happening around you. Things may feel more meaningful than they appear on the surface.",b:"You may notice opportunities that carry a sense of connection, creativity, or emotional resonance, rather than just practicality.",d:"Beneath that, there’s often a quiet alignment between how you feel internally and what is showing up externally.",e:"This doesn’t mean everything is driven by emotion. It may simply show that resonance is playing a stronger role in what is coming toward you right now."},
+{p:"E2",c:"Blue",t:"Beneath the surface, there may be a stabilizing layer that helps you stay grounded.",a:"There’s a stabilizing layer supporting you right now, even if things feel subtle.",b:"You may notice opportunities that require consistency, patience, or a more grounded approach. It’s less about sudden change, and more about steady progress.",d:"Beneath that, there’s often a quiet alignment with building something sustainable over time.",e:"This doesn’t mean things are slow. It may simply show that what is appearing for you is meant to support long-term stability."},
+{p:"E2",c:"Yellow",t:"Beneath the surface, there seems to be a flexible layer that is still adjusting and staying open.",a:"There’s a shifting, flexible layer beneath your current situation. Things may not follow a single clear path.",b:"You may come across different options, possibilities, or directions, rather than one fixed route.",d:"Beneath that, there’s often a quiet invitation to explore without needing immediate clarity.",e:"This doesn’t mean things are uncertain. It may simply show that variety and movement are opening up space for you right now."},
+{p:"E2",c:"Green",t:"Beneath the surface, there may be a caring layer that supports how you relate to others.",a:"There’s a supportive and connected layer present in your current environment.",b:"You may notice opportunities that involve collaboration, shared effort, or being part of something with others.",d:"Beneath that, there’s often a quiet alignment with growing together rather than alone.",e:"This doesn’t mean you are dependent on others. It may simply show that connection is part of how opportunities are appearing for you right now."},
+{p:"E3",c:"Pink",t:"One tension may be between wanting closeness while also sensing the risk of imbalance.",a:"There may be moments where you feel drawn toward closeness, while also being aware of maintaining balance.",b:"You might notice your emotions playing a stronger role in how you experience challenges or situations.",d:"Beneath that, there’s often a quiet need to understand what you truly feel, rather than pushing it aside.",e:"This doesn’t mean things are overwhelming. It may simply show that emotional awareness is becoming more present in your process."},
+{p:"E3",c:"Blue",t:"One tension may be between maintaining steadiness and feeling a sense of distance.",a:"You may find yourself trying to stay steady, even when things require patience or time.",b:"There can be a tendency to hold things together and keep moving in a controlled way.",d:"Beneath that, there’s often a quiet effort to maintain stability and avoid unnecessary disruption.",e:"This doesn’t mean you’re stuck. It may simply show that endurance and steadiness are part of your current phase."},
+{p:"E3",c:"Yellow",t:"One tension here may be the space between wanting freedom and still needing a sense of direction.",a:"You may feel a pull between wanting freedom and needing direction.",b:"It might feel harder to stay on one path without shifting or reconsidering.",d:"Beneath that, there’s often a quiet need to balance openness with a sense of commitment.",e:"This doesn’t mean you lack discipline. It may simply show that flexibility is more active in your system right now."},
+{p:"E3",c:"Green",t:"One tension may be between giving to others and feeling slightly drained.",a:"You may find yourself balancing between giving to others and taking care of your own energy.",b:"There can be moments where you feel responsible for others while also needing space for yourself.",d:"Beneath that, there’s often a quiet need to find a more sustainable balance.",e:"This doesn’t mean you’re overwhelmed. It may simply show that maintaining equilibrium is part of your current focus."},
+{p:"E4",c:"Pink",t:"Your system may be moving toward restoring connection in a way that feels more balanced.",a:"Your energy may feel more emotionally expressive during this time.",b:"You might naturally put more feeling into what you do or how you connect with others.",d:"Beneath that, there’s often a quiet openness in how you show up.",e:"This doesn’t mean you’re overextending. It may simply show that your energy is carrying more emotional depth right now."},
+{p:"E4",c:"Blue",t:"Your system may be moving toward stabilizing and creating a sense of order.",a:"Your energy may feel more steady and contained.",b:"You might be managing your energy carefully, choosing where to place your focus.",d:"Beneath that, there’s often a quiet awareness of maintaining balance.",e:"This doesn’t mean you’re holding back. It may simply show that you are regulating your energy in a thoughtful way."},
+{p:"E4",c:"Yellow",t:"Your system may be trying to stay open, responsive, and in motion while it figures out what feels right.",a:"Your energy may feel more dynamic and changeable.",b:"You might move your attention between different things depending on interest or curiosity.",d:"Beneath that, there’s often a quiet need to stay engaged and responsive.",e:"This doesn’t mean your energy is scattered. It may simply show that movement is part of how your energy is expressing itself right now."},
+{p:"E4",c:"Green",t:"Your system may be moving toward supporting, holding, or maintaining connection with others.",a:"Your energy may be directed toward supporting or maintaining connections.",b:"You might find yourself investing time or attention into others or shared situations.",d:"Beneath that, there’s often a quiet sense of responsibility in how you show up.",e:"This doesn’t mean you are losing energy. It may simply show that your energy is being shared in meaningful ways."},
+{p:"E5",c:"Pink",t:"A gentle direction may be to stay connected while also noticing your own limits.",a:"You may be invited to allow connection while still keeping your own balance.",b:"There can be experiences that deepen your awareness of how you feel and relate.",d:"Beneath that, there’s often a quiet shift toward understanding yourself more clearly.",e:"This doesn’t mean everything is intense. It may simply show that your path is becoming more emotionally aligned."},
+{p:"E5",c:"Blue",t:"A gentle direction may be to allow space while staying open and present.",a:"You may be invited to create space without fully closing yourself off.",b:"Things may unfold gradually, with small but steady changes over time.",d:"Beneath that, there’s often a quiet building of something stable.",e:"This doesn’t mean things are slow. It may simply show that your progress is unfolding in a grounded and steady way."},
+{p:"E5",c:"Yellow",t:"A gentle direction may be to keep moving, while giving yourself just enough direction to feel steady.",a:"You may be invited to keep moving, while gently holding a sense of direction.",b:"You might notice new options, changes, or possibilities appearing along the way.",d:"Beneath that, there’s often a quiet openness to explore what feels right.",e:"This doesn’t mean things are uncertain. It may simply show that your path is expanding and evolving."},
+{p:"E5",c:"Green",t:"A gentle direction may be to allow yourself to receive as well as give.",a:"You may be invited to allow yourself to receive, not just give.",b:"There may be situations that bring you into closer connection with others or shared experiences.",d:"Beneath that, there’s often a quiet alignment with growing through relationships.",e:"This doesn’t mean you are dependent. It may simply show that your journey includes connection and support right now."}];
+const CATS = {
+  "A": {name:"Emotional Connection", sub:"How you relate, open, and respond to closeness", pts:["A1","A2","A3","A4","A5"]},
+  "B": {name:"Action & Movement", sub:"How you move through decisions, pressure, and daily flow", pts:["B1","B2","B3","B4","B5"]},
+  "C": {name:"Inner Processing", sub:"How your internal world is holding, filtering, and adjusting", pts:["C1","C2","C3","C4","C5"]},
+  "D": {name:"Needs & Balance", sub:"What your system is quietly asking for right now", pts:["D1","D2","D3","D4","D5"]},
+  "E": {name:"Overall State Integration", sub:"How everything is currently coming together within you", pts:["E1","E2","E3","E4","E5"]}
+};
+const COLOR_LABEL = {Pink:"Soft Pink 🌸", Blue:"Mist Blue 🌊", Yellow:"Light Yellow 🍋", Green:"Mint Green 🌿"};
+const COLOR_SCORE = {Pink:1, Blue:7, Yellow:3, Green:9}; // scoring weights from Logic_Engine
+const Q_TO_POINT = i => CATLETTER(i) + (((i-1) % 5) + 1);
+function CATLETTER(i){ return ["A","B","C","D","E"][Math.floor((i-1)/5)]; }
+
+/* Sample client rows (Malaysia sample data, generated for demonstration) */
+const SAMPLE_ROWS = [
+  {name:"Aisyah binti Rahman", city:"Kuala Lumpur", answers:["Pink","Green","Green","Blue","Green","Blue","Green","Blue","Blue","Blue","Blue","Green","Green","Green","Green","Blue","Yellow","Yellow","Blue","Yellow"]},
+  {name:"Daniel Lim Wei Jie", city:"Penang", answers:["Blue","Blue","Yellow","Blue","Green","Blue","Yellow","Green","Blue","Yellow","Green","Blue","Green","Blue","Yellow","Green","Blue","Pink","Green","Blue"]}
+];
+
+/* ================= STATE ================= */
+let answers = new Array(20).fill(null); // color index per question: 'Pink'|'Blue'|'Yellow'|'Green'
+let unlocked = false;
+let sealed = false; // true once the report is prepared — answers can no longer change
+let lastReportAnswers = null;
+
+/* ================= SECTION 1 : GATE ================= */
+const check = document.getElementById('confirm-check');
+const unlockBtn = document.getElementById('unlock-btn');
+const gateMsg = document.getElementById('gate-confirm-msg');
+const overlay = document.getElementById('q-overlay');
+
+check.addEventListener('change', () => { unlockBtn.disabled = !check.checked; });
+unlockBtn.addEventListener('click', () => {
+  unlocked = true;
+  overlay.style.display = 'none';
+  gateMsg.style.display = 'block';
+  unlockBtn.disabled = true;
+  unlockBtn.textContent = 'Unlocked ✓';
+  document.getElementById('sec-quest').scrollIntoView({behavior:'smooth'});
+});
+
+/* ================= SECTION 2 : QUESTIONNAIRE ================= */
+function buildQuestions(){
+  const list = document.getElementById('q-list');
+  list.innerHTML = '';
+  QUESTIONS.forEach((q, i) => {
+    const block = document.createElement('div');
+    block.className = 'q-block';
+    const cat = CATLETTER(i+1);
+    block.innerHTML = `
+      <div class="q-head">
+        <div>
+          <div class="cat-label">Category ${cat} · ${CATS[cat].name}</div>
+          <div class="q-title"><span class="q-num">Q${i+1}.</span> ${q.t}</div>
+        </div>
+      </div>
+      <div class="opts">
+        ${['Pink','Blue','Yellow','Green'].map(c => `
+          <button class="opt" data-q="${i}" data-c="${c}">
+            <span class="swatch ${c.toLowerCase()}"></span>${COLOR_LABEL[c]}
+          </button>`).join('')}
+      </div>`;
+    list.appendChild(block);
+  });
+  list.querySelectorAll('.opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(!unlocked || sealed) return;
+      const qi = +btn.dataset.q, col = btn.dataset.c;
+      answers[qi] = col;
+      list.querySelectorAll(`.opt[data-q="${qi}"]`).forEach(b => b.classList.remove('sel','pink','blue','yellow','green'));
+      btn.classList.add('sel', col.toLowerCase());
+      updateScore();
+    });
+  });
+}
+
+function updateScore(){
+  const answered = answers.filter(Boolean).length;
+  document.getElementById('progress-fill').style.width = (answered / 20 * 100) + '%';
+  const t = document.getElementById('progress-text');
+  if (answered === 0) t.textContent = 'Your reflection begins with your first choice.';
+  else if (answered < 20) t.textContent = `${answered} of 20 moments noticed — take your time, there is no rush.`;
+  else t.textContent = 'All 20 reflections complete — your reading is ready whenever you are.';
+  document.getElementById('gen-report').disabled = answered < 20;
+}
+
+/* ================= SECTION 3 : REPORT ================= */
+function entryFor(point, color){ return COPYMAP.find(e => e.p === point && e.c === color); }
+
+function dominantColorOf(letter, cats){
+  const counts = {Pink:0, Blue:0, Yellow:0, Green:0};
+  (cats[letter] || []).forEach(x => counts[x.color]++);
+  let best = 'Pink', bestN = -1;
+  Object.entries(counts).forEach(([c,n]) => { if(n > bestN){ best = c; bestN = n; } });
+  return best;
+}
+
+function computeReport(rows){
+  const cats = {};
+  rows.forEach((c, i) => {
+    const cat = CATLETTER(i+1);
+    (cats[cat] = cats[cat] || []).push({q:i+1, color:c});
+  });
+  const counts = {Pink:0, Blue:0, Yellow:0, Green:0};
+  rows.forEach(c => counts[c]++);
+  let dominant = 'Pink', bestN = -1;
+  Object.entries(counts).forEach(([c,n]) => { if(n > bestN){ dominant = c; bestN = n; } });
+  const catDominant = {};
+  ['A','B','C','D'].forEach(L => catDominant[L] = dominantColorOf(L, cats));
+  return { cats, counts, dominant, dominantN: bestN, catDominant };
+}
+
+/* ================= FULL REPORT PAGE IMAGES (WebP, from the workbook) ================= */
+const IMG = {
+  texture: "webp/image1.webp",      // soft watercolor texture
+  logo: "webp/image2.webp",         // Color Hug logo with sindee.co
+  interacting: "webp/image3.webp",  // How Your Colors May Be Interacting
+  colorLayer: "webp/image4.webp",   // Color Reflection Layer
+  pattern: "webp/image5.webp",      // Your Pattern, at a Glance
+  closing: "webp/image6.webp",      // A Gentle Closing Note
+  awareness: "webp/image7.webp",    // A Gentle Awareness
+  catA: "webp/image8.webp",         // 01 Emotional Connection
+  catB: "webp/image9.webp",         // 02 Action & Movement
+  catC: "webp/image10.webp",        // 03 Inner Processing
+  catD: "webp/image12.webp",        // 04 Needs & Balance
+  catE: "webp/image11.webp",        // 05 Overall State Integration
+  cover: "webp/image13.webp"        // COLOR HUG cover
+};
+
+const CAT_PAGE_META = {
+  "A": {img:"catA", num:"01", tag:"HOW YOU FEEL AND CONNECT"},
+  "B": {img:"catB", num:"02", tag:"HOW YOU TAKE ACTION AND MOVE FORWARD"},
+  "C": {img:"catC", num:"03", tag:"HOW YOU THINK, REFLECT AND MAKE SENSE"},
+  "D": {img:"catD", num:"04", tag:"WHAT YOU NEED TO FEEL ALIGNED"},
+  "E": {img:"catE", num:"05", tag:"HOW IT ALL COMES TOGETHER, WITHIN YOU"}
+};
+
+const PIE_COLORS = {Pink:"#e9b6c2", Blue:"#b9d1e4", Yellow:"#efe0a8", Green:"#bfd9b8"};
+
+function page(innerHTML, footer){
+  return `<div class="rp">${innerHTML}${footer ? `<div class="rp-footer"><span>Color Hug™ · The Lucky Clover</span><span>Personal Insight Report</span></div>` : ''}</div>`;
+}
+
+function pieSVG(counts){
+  const total = 20;
+  const order = ['Pink','Blue','Yellow','Green'];
+  let a0 = -Math.PI/2;
+  let segs = '';
+  order.forEach(c => {
+    const frac = counts[c] / total;
+    if (frac <= 0) return;
+    const a1 = a0 + frac * Math.PI * 2;
+    const large = frac > 0.5 ? 1 : 0;
+    const x0 = 100 + 88 * Math.cos(a0), y0 = 100 + 88 * Math.sin(a0);
+    const x1 = 100 + 88 * Math.cos(a1), y1 = 100 + 88 * Math.sin(a1);
+    segs += `<path d="M100,100 L${x0.toFixed(1)},${y0.toFixed(1)} A88,88 0 ${large} 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${PIE_COLORS[c]}" stroke="#fffdfa" stroke-width="2"/>`;
+    /* label */
+    const mid = (a0 + a1) / 2;
+    const lx = 100 + 55 * Math.cos(mid), ly = 100 + 55 * Math.sin(mid);
+    segs += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="11" fill="#5a5f66" font-family="Georgia, serif">${c} ${Math.round(frac*100)}%</text>`;
+    a0 = a1;
+  });
+  return `<svg viewBox="0 0 200 200" style="width:240px;height:240px;" role="img" aria-label="Overview map of color selections">${segs}</svg>`;
+}
+
+function catEntriesHTML(letter, R, useQ){
+  const cat = CATS[letter];
+  const points = [];
+  if (letter === 'E') {
+    const catLetters = ['A','B','C','D'];
+    cat.pts.forEach((pt, idx) => {
+      const color = idx < 4 ? R.catDominant[catLetters[idx]] : R.dominant;
+      const e = entryFor(pt, color);
+      if(e) points.push({ color, e, label: e.t.split('\n')[0] });
+    });
+  } else {
+    cat.pts.forEach((pt, idx) => {
+      const item = R.cats[letter][idx];
+      const e = entryFor(pt, item.color);
+      if(e) points.push({ color: item.color, e, q: item.q });
+    });
+  }
+  return points.map(({color, e, q}) => `
+    <div class="rep-point ${color.toLowerCase()}">
+      <div class="pt-tone"><span class="swatch ${color.toLowerCase()}"></span>${COLOR_LABEL[color]}${q ? ' · Q' + q : ''}</div>
+      <div class="pt-head">${e.t.replace(/\r?\n/g,' ')}</div>
+      <div class="pt-body">
+        <p>${e.a}</p><p>${e.b}</p><p>${e.d}</p><p>${e.e}</p>
+      </div>
+    </div>`).join('');
+}
+
+function buildReport(name, city, ans){
+  const rows = ans || answers;
+  lastReportAnswers = rows;
+  const R = computeReport(rows);
+  const dateStr = new Date().toLocaleDateString('en-MY', {day:'numeric', month:'long', year:'numeric'});
+  const dom = R.dominant;
+
+  /* per-category dominant tone short name for personalization */
+  const PAGES = [];
+
+  /* ---- 1 · COVER ---- */
+  PAGES.push(page(`
+    <div class="rp-cover">
+      <div class="cover-client">Prepared for ${name}<br>${dateStr}</div>
+      <img src="${IMG.cover}" alt="Color Hug™ — The Lucky Clover cover">
+    </div>
+    <div style="text-align:center; padding:0 36px 30px;">
+      <div class="rp-body soft" style="font-size:.9rem;">A reflection of your inner themes, in the language of colors.<br>
+      Personal Insight Report · ${city}, Malaysia · Preview reflection</div>
+    </div>`, false));
+
+  /* ---- 2 · INTRO ---- */
+  PAGES.push(page(`
+    <div class="rp-pad" style="text-align:center; padding-top:56px; padding-bottom:44px;">
+      <img src="${IMG.logo}" alt="Color Hug logo" style="width:340px; margin:0 auto 26px;">
+      <div class="rp-title" style="font-size:1.5rem;">This is your space<br>to understand yourself<br>a little more.</div>
+      <div class="rp-hr" style="width:180px; margin:20px auto;"></div>
+      <div class="rp-body soft">There is no right or wrong here.<br>Just a journey to see what's really you.<br>Let's begin.</div>
+    </div>`, false));
+
+  /* ---- 3 · OVERVIEW MAP (pie chart) ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">Your Reading at a Glance</div>
+      <div class="rp-title">Overview Map</div>
+      <div class="rp-sub">The shape of your choices — twenty quiet selections, held in four colors.</div>
+      <div class="pie-wrap">
+        ${pieSVG(R.counts)}
+        <div class="pie-legend">
+          ${['Pink','Blue','Yellow','Green'].map(c => `<div><span class="swatch ${c.toLowerCase()}"></span>${COLOR_LABEL[c]} — ${R.counts[c]} of 20</div>`).join('')}
+        </div>
+      </div>
+      <p class="pie-note">Your reading leans most gently toward <b>${COLOR_LABEL[dom]}</b>, held quietly alongside the other tones you chose. Each color reflects a different emotional tone — gently mapped across relational and internal dimensions to offer a clearer view of your current state.</p>
+      <div class="rp-quote">This is not a personality test.<br>It is a gentle reflection of where your system is leaning.<br>The colors you are drawn to are not random — they often point toward what is being felt, processed, or held quietly within you.</div>
+    </div>`, true));
+
+  /* ---- 4 · COLOR REFLECTION LAYER ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">Color Hug™ · The Lucky Clover</div>
+      <div class="rp-title">Color Reflection Layer</div>
+      <div class="rp-sub">What each color may be reflecting</div>
+      <div class="rp-body soft" style="margin-bottom:16px;">These are not definitions. They are gentle reflections of the inner themes each color may be highlighting within your system.</div>
+      <div class="rp-quote" style="margin-bottom:18px;">Take what resonates. Leave what doesn't.</div>
+      <div class="rp-2col">
+        <div class="rp-card card-pink">
+          <h5>PINK</h5><div class="csub">Sensitivity &amp; Connection</div>
+          <ul>
+            <li><b>A sensitivity to emotional tone</b>You notice feelings, even the unspoken ones.</li>
+            <li><b>A natural inclination to care</b>You often hold space for others with warmth.</li>
+            <li><b>A tendency to adapt and soften</b>You adjust to maintain harmony and ease.</li>
+            <li><b>A deep need for connection</b>You value closeness, trust, and belonging.</li>
+          </ul>
+          <div class="bestline">At your best, Pink brings compassion, empathy, and the ability to heal through presence.</div>
+        </div>
+        <div class="rp-card card-blue">
+          <h5>BLUE</h5><div class="csub">Clarity &amp; Depth</div>
+          <ul>
+            <li><b>A need for calm, clarity, and understanding</b>You seek to make sense before you respond.</li>
+            <li><b>A preference for inner processing</b>You reflect, observe, and think things through.</li>
+            <li><b>A steady and contained rhythm</b>You value stability in thoughts and emotions.</li>
+            <li><b>A search for meaning</b>You look beneath the surface for truth.</li>
+          </ul>
+          <div class="bestline">At your best, Blue brings wisdom, perspective, and the ability to see beyond the moment.</div>
+        </div>
+        <div class="rp-card card-yellow">
+          <h5>YELLOW</h5><div class="csub">Energy &amp; Possibility</div>
+          <ul>
+            <li><b>A pull toward movement and ideas</b>You're inspired by what's possible.</li>
+            <li><b>A natural curiosity</b>You explore, learn, and imagine new paths.</li>
+            <li><b>A lighter, forward-facing energy</b>You bring brightness and optimism.</li>
+            <li><b>A desire for freedom and expression</b>You value space to be creative and original.</li>
+          </ul>
+          <div class="bestline">At your best, Yellow brings inspiration, motivation, and the courage to explore.</div>
+        </div>
+        <div class="rp-card card-green">
+          <h5>GREEN</h5><div class="csub">Balance &amp; Stability</div>
+          <ul>
+            <li><b>A focus on balance and harmony</b>You seek stability in people and environment.</li>
+            <li><b>A tendency to support and maintain</b>You help things grow and stay steady.</li>
+            <li><b>A need for fairness and mutuality</b>You value give-and-take and integrity.</li>
+            <li><b>A quiet strength</b>You persist, care, and build over time.</li>
+          </ul>
+          <div class="bestline">At your best, Green brings grounding, reliability, and the ability to sustain what matters.</div>
+        </div>
+      </div>
+    </div>`, true));
+
+  /* ---- 5 · HOW YOUR COLORS MAY BE INTERACTING ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">Color Hug™ · The Lucky Clover</div>
+      <div class="rp-title">How Your Colors May Be Interacting</div>
+      <div class="rp-sub">Not just individual — but in relation.</div>
+      <div class="rp-body">
+        <p>Your system is not defined by a single color. It is shaped by how these tones move together. Some may support each other. Some may create subtle tension.</p>
+        <p>These interactions influence how you think, feel, respond, and recover. This is not something to fix — but something to understand. <span class="rp-violet"><b>Because this is where your pattern lives.</b></span></p>
+      </div>
+      <div class="rp-quote" style="margin-top:16px;">
+        <div style="font-style:normal; margin-bottom:12px;"><span class="rp-violet" style="letter-spacing:2px; font-size:.72rem; text-transform:uppercase;">✦ Insight</span></div>
+        <div class="insight-row"><span class="pairs"><span class="swatch pink"></span><span class="swatch green"></span></span><p>When <b>Pink and Green</b> are strong together, you naturally care and hold space for others. Beautiful — but it can also lead to taking on more than you realize.</p></div>
+        <div class="insight-row"><span class="pairs"><span class="swatch blue"></span><span class="swatch yellow"></span></span><p>When <b>Blue and Yellow</b> are strong together, you think deeply and explore possibilities. This brings ideas to life, but may also create mental overactivity at times.</p></div>
+        <div class="insight-row"><span class="pairs"><span class="swatch green"></span><span class="swatch blue"></span></span><p>When <b>Green and Blue</b> are strong together, you seek stability and inner calm. This supports resilience, but may lean toward over-responsibility.</p></div>
+        <div class="insight-row"><span class="pairs"><span class="swatch yellow"></span><span class="swatch pink"></span></span><p>When <b>Yellow and Pink</b> are strong together, you feel and act with heart. This creates warmth and connection, but may lead to people-pleasing.</p></div>
+        <p style="font-style:italic; margin-top:10px;">There is no right or wrong combination. Awareness is the first step toward balance that feels true to you.</p>
+      </div>
+    </div>`, true));
+
+  /* ---- 6 · YOUR PATTERN, AT A GLANCE ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">Color Hug™ · The Lucky Clover</div>
+      <div class="rp-title">Your Pattern, at a Glance</div>
+      <div class="rp-sub">A soft overview of how your system may be working</div>
+      <div class="rp-body">
+        <p>There is a pattern in how you relate, how you move, and how you hold what you feel. It may not always be obvious, but it tends to repeat in quiet ways.</p>
+        <p><span class="rp-violet">In your case, there is a leaning toward <b>${dom === 'Pink' ? 'connection and emotional warmth' : dom === 'Blue' ? 'clarity, steadiness, and inner calm' : dom === 'Yellow' ? 'lightness, movement, and openness' : 'balance, care, and emotional awareness'}</b>.</span></p>
+        <p>You may find yourself holding things together, adjusting slightly, or maintaining connection even when no one asks you to. This is not something to fix. <span class="rp-violet">It is simply how your system has learned to work.</span></p>
+      </div>
+      <div style="text-align:center; font-size:.78rem; letter-spacing:2px; color:var(--accent); margin-top:20px;">— ✦ YOUR PATTERN TENDS TO SHOW UP AS: ✦ —</div>
+      <div class="glance-4">
+        <div class="g-pink"><div class="g-ico">🌸</div><div class="g-t">You Care Deeply</div><div class="g-d">You have a natural sensitivity to others and the emotional atmosphere around you.</div></div>
+        <div class="g-green"><div class="g-ico">🌿</div><div class="g-t">You Seek Balance</div><div class="g-d">You prefer stability, harmony, and a sense of things being steady and mutual.</div></div>
+        <div class="g-blue"><div class="g-ico">🌊</div><div class="g-t">You Think Deeply</div><div class="g-d">You process internally and need clarity before you express or decide.</div></div>
+        <div class="g-yellow"><div class="g-ico">🍋</div><div class="g-t">You Look Forward</div><div class="g-d">You are open to ideas, possibilities, and growth when the timing feels right.</div></div>
+      </div>
+      <div class="rp-quote" style="text-align:center; border-left:none; margin-top:20px;">These are not labels.<br><span class="rp-violet">They are patterns you can work with, not against.</span></div>
+    </div>`, true));
+
+  /* ---- 7 · A GENTLE AWARENESS ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">Color Hug™ · The Lucky Clover</div>
+      <div class="rp-title">A Gentle Awareness</div>
+      <div class="rp-sub">Noticing is not pressure. It is permission.</div>
+      <div class="rp-body">
+        <p>There may be parts of this that already feel familiar. Not because they are new, but because they have been there for a while.</p>
+        <p>Sometimes, what we are holding does not feel heavy at first. It simply becomes part of how we move. <span class="rp-violet">Until one day, we begin to notice it.</span></p>
+        <p>And noticing <span class="rp-gold">is already a shift.</span></p>
+      </div>
+      <div class="allow-row">
+        <div class="allow-circ pink">You are allowed to feel.</div>
+        <div class="allow-circ green">You are allowed to pause.</div>
+        <div class="allow-circ blue">You are allowed to reflect.</div>
+        <div class="allow-circ yellow">You are allowed to grow.</div>
+      </div>
+      <div class="rp-quote" style="text-align:center; border-left:none; margin-top:22px;"><span class="rp-gold">You are doing better</span><br>than you think you are.</div>
+    </div>`, true));
+
+  /* ---- 8 · CATEGORY PAGES (intro page before each category's readings) ---- */
+  Object.entries(CATS).forEach(([letter, cat]) => {
+    const m = CAT_PAGE_META[letter];
+    /* intro divider page */
+    PAGES.push(page(`
+      <div class="cat-page c${'ABCDE'.indexOf(letter) + 1}">
+        <img class="cat-img" src="${IMG[m.img]}" alt="${cat.name}">
+        <div class="cat-side">
+          <div class="cat-num">${m.num}</div>
+          <div class="cat-num-line"></div>
+          <div class="cat-name">${cat.name}</div>
+          <div class="cat-tag">${m.tag}</div>
+        </div>
+        <div class="cat-foot">Personal Insight Report</div>
+      </div>`, false));
+    /* readings page */
+    PAGES.push(page(`
+      <div class="rp-pad">
+        <div class="rp-kicker">Category ${letter} · ${cat.name}</div>
+        <div class="rp-title" style="font-size:1.35rem;">${cat.name}</div>
+        <div class="rp-sub">${cat.sub}</div>
+        ${catEntriesHTML(letter, R)}
+      </div>`, true));
+  });
+
+  /* ---- 9 · REPORT USAGE ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">For Your Reference</div>
+      <div class="rp-title">Report Usage</div>
+      <div class="rp-body">
+        <p>This report is generated through a structured interpretation framework based on color preference and response patterns.</p>
+        <p>Each color reflects a different emotional tone, which is gently mapped across relational and internal dimensions to offer a clearer view of your current state.</p>
+        <p>This is not a personality test, nor is it designed to define, diagnose, or predict outcomes. It simply reflects patterns observed within the responses provided at the time.</p>
+        <hr class="rp-hr">
+        <p>This report is intended for personal reflection only.</p>
+        <p>It does not replace professional advice of any kind, including medical, psychological, legal, or financial matters. All interpretations are non-diagnostic and non-prescriptive.</p>
+        <p>Any decisions made based on this report remain the sole responsibility of the individual.</p>
+        <p>The system offers structured reflections — not instructions, guarantees, or fixed conclusions.</p>
+      </div>
+    </div>`, true));
+
+  /* ---- 10 · HOW TO READ THIS REPORT ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">For Your Reference</div>
+      <div class="rp-title">How to Read This Report</div>
+      <div class="rp-body">
+        <p>This report is designed to be read gently — not as something to analyze, but something to notice.</p>
+        <p>You may find that some parts feel very accurate, while others feel less familiar. That is completely natural.</p>
+        <p>Each section reflects a different way your system may be relating, responding, or holding experiences at this moment.</p>
+        <div class="rp-h4">Read it as a reflection, not a definition</div>
+        <p class="soft">Nothing here is fixed. This is not a label, and it is not a conclusion about who you are. It is simply a snapshot — a way to see how things may be moving within you right now.</p>
+        <div class="rp-h4">Move through it at your own pace</div>
+        <p class="soft">There is no need to rush. You can read everything at once, or return to certain sections over time. Sometimes, clarity doesn't come from reading more — but from letting a few lines settle.</p>
+        <div class="rp-h4">Notice what feels familiar</div>
+        <p class="soft">If something resonates, it may already be something you've been feeling — just not fully put into words. You don't need to force agreement. A small sense of recognition is enough.</p>
+        <div class="rp-h4">Let it stay light</div>
+        <p class="soft">You don't need to change anything immediately. This report is not asking you to act, fix, or decide. It simply offers a clearer view — so that when you do move forward, you're doing so with a bit more awareness.</p>
+        <div class="rp-h4">A gentle note</div>
+        <p class="soft">You are not behind. Your system is not doing anything wrong. It is simply adjusting, in the way it knows how. And sometimes, seeing it more clearly is already enough.</p>
+      </div>
+    </div>`, true));
+
+  /* ---- 11 · GENTLE CLOSING NOTE ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <img src="${IMG.closing}" alt="A gentle closing note" style="border-radius:4px; margin-bottom:20px;">
+      <div class="rp-body" style="text-align:center;">
+        <p class="rp-violet" style="font-style:italic;">May this insight stay with you<br>as you move forward, in your own time, in your own way.</p>
+        <p>Thank you for trusting this space.<br><span class="rp-violet">Your journey matters. ♡</span></p>
+      </div>
+      <div class="site-line">Prepared with care · <b>sindee.co</b></div>
+    </div>`, false));
+
+  /* ---- 12 · FURTHER SYSTEM DIVE IN ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">Where This Can Go Next</div>
+      <div class="rp-title">Further System Dive In</div>
+      <div class="dive-card">
+        <div class="d-t">Emotion-Sync Metric™ | Module 1: Stabilization</div>
+        <div class="d-d">Emotion-Sync Metric™ (ESM™) is a structured state-mapping framework built around eight functional dimensions. By integrating self-reported indicators of physiological activation and cognitive load, ESM™ identifies the system's current Primary Load Driver — offering a structured perspective on energy distribution and operational patterns.</div>
+      </div>
+      <div class="dive-card">
+        <div class="d-tag">Exclusive</div>
+        <div class="d-t">CORE RESET™ | The Ultimate Mind Unplugged</div>
+        <div class="d-d">A proprietary methodology focusing on mental clarity and core belief realignment.</div>
+      </div>
+      <div class="site-line">Explore more at <b>sindee.co</b></div>
+    </div>`, false));
+
+  /* render */
+  document.getElementById('rep-pages').innerHTML = PAGES.join('');
+  document.getElementById('report-empty').style.display = 'none';
+  document.getElementById('report-area').style.display = 'block';
+  document.getElementById('sec-report-desc').textContent = 'Your full reflection is ready below — you may print it or simply keep what resonates. Nothing is saved or sent.';
+  document.getElementById('sec-report').scrollIntoView({behavior:'smooth'});
+}
+
+function reportPlainText(name, city, ans){
+  const rows = ans || answers;
+  const R = computeReport(rows);
+  const lines = [];
+  lines.push('COLOR HUG(TM) - THE LUCKY CLOVER');
+  lines.push('PERSONAL INSIGHT REPORT - EMOTIONAL ORIENTATION REFLECTION');
+  lines.push('Prepared for ' + name + ' (' + city + ', Malaysia)');
+  lines.push('Date: ' + new Date().toLocaleDateString('en-MY'));
+  lines.push('');
+  lines.push('== OVERVIEW MAP ==');
+  ['Pink','Blue','Yellow','Green'].forEach(c => lines.push(COLOR_LABEL[c] + ': ' + R.counts[c] + ' of 20'));
+  lines.push('Overall tone: ' + COLOR_LABEL[R.dominant]);
+  lines.push('');
+  Object.entries(CATS).forEach(([letter, cat]) => {
+    lines.push('== ' + cat.name.toUpperCase() + ' ==');
+    cat.pts.forEach((pt, idx) => {
+      let color, label;
+      if (letter === 'E') {
+        const cl = ['A','B','C','D'];
+        color = idx < 4 ? R.catDominant[cl[idx]] : R.dominant;
+        label = '';
+      } else {
+        const item = R.cats[letter][idx];
+        color = item.color; label = ' (Q' + item.q + ')';
+      }
+      const e = entryFor(pt, color);
+      if(e) lines.push(COLOR_LABEL[color] + label + ' - ' + e.t.replace(/\r?\n/g,' ') + '\n  ' + e.a + '\n  ' + e.b + '\n  ' + e.d + '\n  ' + e.e);
+    });
+    lines.push('');
+  });
+  lines.push('This report is a structured reflection, not a personality test. Non-diagnostic. Sample preview only.');
+  lines.push('sindee.co');
+  return lines.join('\n');
+}
+
+document.getElementById('print-btn').addEventListener('click', () => window.print());
+document.getElementById('copy-btn').addEventListener('click', async () => {
+  const name = document.querySelector('.rep-meta b').textContent;
+  try {
+    await navigator.clipboard.writeText(reportPlainText(name, 'Malaysia', lastReportAnswers));
+    const b = document.getElementById('copy-btn');
+    b.textContent = 'Copied ✓'; setTimeout(() => b.textContent = 'Copy Report Text', 1800);
+  } catch(err) { alert('Copy not available in this browser — please use Print instead.'); }
+});
+
+/* ================= INIT (never opens empty) ================= */
+buildQuestions();
+updateScore();
+/* A worked sample reflection is shown on load so the page never opens empty.
+   It is rendered, then gently hidden again — the section shows the invitation text
+   until the client prepares their own reading. */
+try {
+  buildReport(SAMPLE_ROWS[0].name, SAMPLE_ROWS[0].city, SAMPLE_ROWS[0].answers);
+} catch (e) { /* keep the page usable even if sample rendering fails */ }
+document.getElementById('report-area').style.display = 'none';
+document.getElementById('report-empty').style.display = 'block';
+document.getElementById('sec-report-desc').textContent = 'Your personal reading appears here, ready whenever you have completed your choices.';
+
+/* ---------- gentle acknowledgement + final lock ---------- */
+const ackBox = document.getElementById('ack-box');
+const ackCheck = document.getElementById('ack-check');
+const ackContinue = document.getElementById('ack-continue');
+const qOverlayFinal = document.getElementById('q-overlay-final');
+
+document.getElementById('gen-report').addEventListener('click', () => {
+  /* first press: offer the gentle acknowledgement instead of generating immediately */
+  if (ackBox.style.display !== 'block') {
+    ackBox.style.display = 'block';
+    ackBox.scrollIntoView({behavior:'smooth'});
+    return;
+  }
+});
+
+ackCheck.addEventListener('change', () => { ackContinue.disabled = !ackCheck.checked; });
+
+ackContinue.addEventListener('click', () => {
+  /* prepare the reading from the held answers */
+  sealed = true;
+  buildReport('Your Session (sample preview)', 'Kuala Lumpur', answers);
+
+  /* the questionnaire now fully closes — answers are held, not editable */
+  document.getElementById('sec-quest').classList.add('sealed');
+  qOverlayFinal.style.display = 'flex';
+  ackBox.style.display = 'none';
+  document.getElementById('gen-report').disabled = true;
+});
+</script>
+</body>
+</html>
