@@ -35,6 +35,25 @@
   .btn-ghost{background:transparent; color:var(--deep); border:1px solid var(--deep);}
   .confirm-msg{font-size:.92rem; color:#5c6e62; margin-top:14px; font-style:italic;}
 
+  /* ---------- report client-information block (REPORT rows 76-78) ---------- */
+  .client-block{margin-top:6px;}
+  .ci-row{display:flex; gap:18px; padding:10px 0; border-bottom:1px solid var(--line);}
+  .ci-row:last-child{border-bottom:none;}
+  .ci-label{flex:0 0 110px; font-size:.78rem; letter-spacing:2.5px; color:var(--ink-soft); padding-top:2px;}
+  .ci-val{font-size:1rem; color:var(--deep);}
+
+  /* ---------- client information ---------- */
+  .client-row{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
+  .client-row label{font-size:.8rem; letter-spacing:2px; text-transform:uppercase; color:var(--ink-soft);}
+  .client-row input{font-family:inherit; font-size:.95rem; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:3px; padding:11px 14px; outline:none;}
+  .client-row input:focus{border-color:var(--accent);}
+  .client-msg{font-size:.85rem; color:#a06a72; margin-top:6px; font-style:italic;}
+
+  /* ---------- gentle reminder dialog ---------- */
+  .gentle-dialog{position:fixed; inset:0; background:rgba(61,64,69,.35); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; z-index:60; padding:20px;}
+  .gentle-box{background:var(--card); border:1px solid var(--line); border-radius:6px; box-shadow:0 10px 40px rgba(50,50,50,.18); max-width:520px; width:100%; padding:30px 34px;}
+  .gentle-actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:20px; justify-content:flex-end;}
+
   /* ---------- gentle acknowledgement ---------- */
   .ack-box{border:1px solid var(--line); border-radius:4px; padding:22px 26px; margin-top:16px; background:#fbfaf8;}
   .ack-title{font-size:1.05rem; color:var(--deep); letter-spacing:.5px; margin-bottom:10px;}
@@ -57,7 +76,9 @@
   .swatch.pink{background:var(--pink);} .swatch.blue{background:var(--blue);}
   .swatch.yellow{background:var(--yellow);} .swatch.green{background:var(--green);}
 
-  .score-bar{position:sticky; bottom:0; margin-top:16px; background:#eef4f6; border:1px solid var(--line); border-radius:10px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; font-size:.92rem;}
+  .score-bar{margin-top:16px; background:#eef4f6; border:1px solid var(--line); border-radius:10px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; font-size:.92rem;}
+  .submit-row{margin-top:18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .submit-note{font-size:.82rem; color:var(--ink-soft); font-style:italic;}
   .score-total{font-size:.95rem; color:var(--ink-soft); font-style:italic;}
   .progress-track{flex:1 1 180px; min-width:160px; height:5px; background:#dde5e8; border-radius:4px; overflow:hidden;}
   .progress-fill{height:100%; width:0%; background:var(--accent); border-radius:4px; transition:width .3s ease;}
@@ -173,15 +194,29 @@
   .site-line b{color:var(--deep); letter-spacing:2px;}
 
   @media print{
+    @page{ size: A4 portrait; margin: 14mm 12mm; }
     body{background:#fff;}
+    /* Report-only printing: hide every application UI element outside the report container */
+    body > .wrap > header.app,
+    #sec-gate,
+    #sec-quest,
+    #sec-report .sec-tag,
+    #sec-report > h2,
+    #sec-report .sec-desc,
+    .rep-actions,
+    .rep-disclaimer,
+    footer,
+    .ack-box,
+    .gentle-dialog,
     .no-print{display:none !important;}
-    section{border:none; box-shadow:none; padding:0; margin-bottom:26px; page-break-inside:avoid;}
-    #sec-gate{display:none !important;}
-    #sec-report{display:block !important;}
-    .score-bar{position:static;}
-    .rep-actions{display:none;}
-    .rp{border:none; margin-bottom:0;}
+    .wrap{max-width:none; padding:0; margin:0;}
+    #sec-report{display:block !important; border:none; box-shadow:none; padding:0; margin:0; background:transparent;}
+    .rp{border:none; box-shadow:none; margin-bottom:0; page-break-inside:avoid;}
     .rep-pages{gap:0;}
+    .cat-page{min-height:auto; page-break-inside:avoid;}
+    .cat-page .cat-img{object-fit:contain;}
+    .rp-point{page-break-inside:avoid;}
+    .rep-cat{page-break-inside:avoid;}
   }
 </style>
 </head>
@@ -193,6 +228,9 @@
     <div class="sub">Payment-Confirmed Questionnaire Report · Emotional Orientation Reflection</div>
     <div class="ornament">— ❦ —</div>
   </header>
+
+  <!-- ============ QUESTIONNAIRE VIEW (hidden entirely after final submission) ============ -->
+  <div id="questionnaire-view">
 
   <!-- ================= SECTION 1 : PAYMENT CONFIRMED (GATE) ================= -->
   <section id="sec-gate">
@@ -213,6 +251,24 @@
       </div>
       <div class="confirm-msg" id="gate-confirm-msg" style="display:none;">The questionnaire below is now open for you.</div>
       <div class="gate-note">Kindly note — this is a <strong>preview experience</strong> only. Nothing is saved between visits; your reflections live on this screen alone, and this sample is not an official or paid report.</div>
+    </div>
+  </section>
+
+  <!-- ================= CLIENT INFORMATION ================= -->
+  <section id="sec-client">
+    <span class="sec-tag">Your Details</span>
+    <h2>A Little About You</h2>
+    <div class="sec-desc">These details appear on the cover of your completed reflection. They stay in this browser only — never stored, never sent.</div>
+    <div class="gate-box">
+      <div class="client-row">
+        <label for="client-name">Name</label>
+        <input type="text" id="client-name" autocomplete="name" placeholder="Your name as you'd like it to appear">
+      </div>
+      <div class="client-row">
+        <label for="client-email">Email</label>
+        <input type="email" id="client-email" autocomplete="email" placeholder="you@example.com">
+      </div>
+      <div class="client-msg" id="client-msg" style="display:none;"></div>
     </div>
   </section>
 
@@ -238,50 +294,55 @@
     <div class="score-bar no-print">
       <div class="score-total"><span id="progress-text">Your reflection begins with your first choice.</span></div>
       <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-      <button class="btn" id="gen-report" disabled>Prepare My Reflection</button>
     </div>
 
-    <!-- Gentle acknowledgement before the report is prepared -->
-    <div class="ack-box no-print" id="ack-box" style="display:none;">
-      <div class="ack-title">Before your reflection is prepared</div>
-      <p class="ack-text">
-        Once your reading is prepared, your choices will be received as they are —
-        <strong>answers cannot be changed, and the questionnaire gently closes</strong>.
-        This allows your reflection to be held with the care and completeness it deserves.
-      </p>
-      <p class="ack-text" style="margin-top:6px;">
-        There is no rush — if you would like a moment more with your choices, they are still yours to revisit before you continue.
-      </p>
-      <div class="gate-row">
-        <label style="display:flex;align-items:center;gap:10px;font-size:.95rem;">
-          <input type="checkbox" id="ack-check">
-          I understand my answers will be final, and I am ready to receive my reflection
-        </label>
-        <button class="btn" id="ack-continue" disabled>Continue to My Reflection</button>
-      </div>
+    <div class="submit-row no-print">
+      <button class="btn" id="gen-report" disabled>Submit My Responses</button>
+      <div class="submit-note">You will be asked to confirm before your reflection is prepared.</div>
     </div>
   </section>
 
+  </div><!-- /questionnaire-view -->
+
+  <!-- Gentle Reminder dialog (final submission confirmation) -->
+  <div class="gentle-dialog no-print" id="gentle-dialog" style="display:none;">
+    <div class="gentle-box">
+      <div class="ack-title">A Gentle Reminder</div>
+      <p class="ack-text">
+        Before continuing, please take a moment to review your responses and ensure they reflect what you wish to share.
+      </p>
+      <p class="ack-text" style="margin-top:8px;">
+        Once submitted, your responses will be finalized for this session and can no longer be edited.
+      </p>
+      <p class="ack-text" style="margin-top:8px;">
+        Your responses and report will not be stored in a client account or database. We encourage you to save a personal copy of your report once it is ready.
+      </p>
+      <div class="gentle-actions">
+        <button class="btn btn-ghost" id="btn-review">Review My Responses</button>
+        <button class="btn" id="btn-confirm">Confirm &amp; Generate My Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ REPORT VIEW (only content visible after final submission) ============ -->
+  <div id="report-view" style="display:none;">
   <!-- ================= SECTION 3 : REPORT ================= -->
   <section id="sec-report">
-    <span class="sec-tag">Section Three</span>
-    <h2>Your Reflection Report</h2>
-    <div class="sec-desc" id="sec-report-desc">Your personal reading appears here, ready whenever you have completed your choices.</div>
+    <div class="rep-actions no-print" style="margin-bottom:18px;">
+      <button class="btn" id="print-btn">Print Report</button>
+      <button class="btn btn-ghost" id="copy-btn">Copy Full Report</button>
+      <span class="save-hint" style="align-self:center; font-size:.8rem; color:var(--ink-soft); font-style:italic;">Tip: choose "Save as PDF" in the print dialog to keep a copy.</span>
+    </div>
 
-    <div id="report-empty">Your reflection is being prepared — take your gentle time with the questions above, and your reading will appear here.</div>
-
-    <div id="report-area">
-      <div class="rep-actions no-print" style="margin-bottom:18px;">
-        <button class="btn" id="print-btn">Print This Reflection</button>
-        <button class="btn btn-ghost" id="copy-btn">Copy the Words</button>
-      </div>
-
+    <!-- Dedicated report container: the only content included in Print / PDF / Copy -->
+    <div id="color-hug-report">
       <div class="rep-pages" id="rep-pages"></div>
     </div>
   </section>
 
-  <footer>Color Hug™ · Payment-Confirmed Questionnaire Report · A quiet preview — nothing is stored or sent.</footer>
-</div>
+  <footer class="no-print">Color Hug™ · Payment-Confirmed Questionnaire Report · A quiet preview — nothing is stored or sent.</footer>
+  </div><!-- /report-view -->
+</div><!-- /wrap -->
 
 <script>
 /* ================= DATA (extracted from the Color Hug™ Logic Engine workbook) ================= */
@@ -406,16 +467,23 @@ const COPYMAP = [{p:"A1",c:"Pink",t:"You are leaning toward connection right now
 {p:"E5",c:"Yellow",t:"A gentle direction may be to keep moving, while giving yourself just enough direction to feel steady.",a:"You may be invited to keep moving, while gently holding a sense of direction.",b:"You might notice new options, changes, or possibilities appearing along the way.",d:"Beneath that, there’s often a quiet openness to explore what feels right.",e:"This doesn’t mean things are uncertain. It may simply show that your path is expanding and evolving."},
 {p:"E5",c:"Green",t:"A gentle direction may be to allow yourself to receive as well as give.",a:"You may be invited to allow yourself to receive, not just give.",b:"There may be situations that bring you into closer connection with others or shared experiences.",d:"Beneath that, there’s often a quiet alignment with growing through relationships.",e:"This doesn’t mean you are dependent. It may simply show that your journey includes connection and support right now."}];
 const CATS = {
-  "A": {name:"Emotional Connection", sub:"How you relate, open, and respond to closeness", pts:["A1","A2","A3","A4","A5"]},
-  "B": {name:"Action & Movement", sub:"How you move through decisions, pressure, and daily flow", pts:["B1","B2","B3","B4","B5"]},
-  "C": {name:"Inner Processing", sub:"How your internal world is holding, filtering, and adjusting", pts:["C1","C2","C3","C4","C5"]},
-  "D": {name:"Needs & Balance", sub:"What your system is quietly asking for right now", pts:["D1","D2","D3","D4","D5"]},
-  "E": {name:"Overall State Integration", sub:"How everything is currently coming together within you", pts:["E1","E2","E3","E4","E5"]}
+  "A": {name:"Emotional Connection", sub:"How you relate, open, and respond to closeness", pts:["A1","A2","A3","A4","A5"], qRange:[1,4], countRange:[2,5]},
+  "B": {name:"Action & Movement", sub:"How you move through decisions, pressure, and daily flow", pts:["B1","B2","B3","B4","B5"], qRange:[5,8], countRange:[6,9]},
+  "C": {name:"Inner Processing", sub:"How your internal world is holding, filtering, and adjusting", pts:["C1","C2","C3","C4","C5"], qRange:[9,12], countRange:[10,13]},
+  "D": {name:"Needs & Balance", sub:"What your system is quietly asking for right now", pts:["D1","D2","D3","D4","D5"], qRange:[13,16], countRange:[14,17]},
+  "E": {name:"Overall State Integration", sub:"How everything is currently coming together within you", pts:["E1","E2","E3","E4","E5"], qRange:[17,20], countRange:[18,21]}
 };
 const COLOR_LABEL = {Pink:"Soft Pink 🌸", Blue:"Mist Blue 🌊", Yellow:"Light Yellow 🍋", Green:"Mint Green 🌿"};
-const COLOR_SCORE = {Pink:1, Blue:7, Yellow:3, Green:9}; // scoring weights from Logic_Engine
-const Q_TO_POINT = i => CATLETTER(i) + (((i-1) % 5) + 1);
-function CATLETTER(i){ return ["A","B","C","D","E"][Math.floor((i-1)/5)]; }
+const COLOR_ORDER = ["Pink","Blue","Yellow","Green"]; // original Logic_Engine column order — first-match tie-breaking
+const Q_TO_CAT = q => Object.keys(CATS).find(L => q >= CATS[L].qRange[0] && q <= CATS[L].qRange[1]);
+function CATLETTER(i){ return Q_TO_CAT(i); }
+/* Approved Interpretation Manual passages (drawing2/drawing4, English) — fixed editorial intros */
+const MANUAL_INTRO = {
+  "A1": "You are not just someone who cares.\n\nYou often become the one who holds things together, even when no one asks you to.\n\nAnd over time, that can start to feel heavier than it looks.",
+  "B1": "And this is how it often begins.\n\nYou don't rush into things.\n\nYou take time to process, to understand,\nto make sure things feel right before moving.\n\nBut sometimes,\nthat space between thinking and acting grows wider than expected.",
+  "C1": "And beneath that,\nthere is more than what shows on the surface.\n\nYou feel more than you express.\n\nThere are layers within you\nthat don't always come out in words.\n\nAnd at times,\nit can feel like you're holding more than you can explain.",
+  "D1": "And when this continues,\nsomething in you starts to shift.\n\nNot loudly,\nbut in quiet, subtle ways.\n\nA need for space,\na need for something to ease.\n\nAnd over time,\nthat quiet need becomes harder to ignore."
+};
 
 /* Sample client rows (Malaysia sample data, generated for demonstration) */
 const SAMPLE_ROWS = [
@@ -493,27 +561,34 @@ function updateScore(){
 /* ================= SECTION 3 : REPORT ================= */
 function entryFor(point, color){ return COPYMAP.find(e => e.p === point && e.c === color); }
 
-function dominantColorOf(letter, cats){
+/* Original Logic_Engine methodology: per-category COUNTIF frequency, then
+   INDEX/MATCH/MAX dominant selection with first-match tie-breaking (Pink→Blue→Yellow→Green). */
+function logicDominant(answers, qFrom, qTo){
   const counts = {Pink:0, Blue:0, Yellow:0, Green:0};
-  (cats[letter] || []).forEach(x => counts[x.color]++);
-  let best = 'Pink', bestN = -1;
-  Object.entries(counts).forEach(([c,n]) => { if(n > bestN){ best = c; bestN = n; } });
-  return best;
+  for (let q = qFrom; q <= qTo; q++) {
+    const c = answers[q-1];
+    if (c && counts[c] !== undefined) counts[c]++;
+  }
+  let best = COLOR_ORDER[0], bestN = -1;
+  for (const c of COLOR_ORDER) {           // first-match: strictly greater replaces only
+    if (counts[c] > bestN) { best = c; bestN = counts[c]; }
+  }
+  return { color: best, counts };
 }
 
 function computeReport(rows){
-  const cats = {};
-  rows.forEach((c, i) => {
-    const cat = CATLETTER(i+1);
-    (cats[cat] = cats[cat] || []).push({q:i+1, color:c});
-  });
-  const counts = {Pink:0, Blue:0, Yellow:0, Green:0};
-  rows.forEach(c => counts[c]++);
-  let dominant = 'Pink', bestN = -1;
-  Object.entries(counts).forEach(([c,n]) => { if(n > bestN){ dominant = c; bestN = n; } });
   const catDominant = {};
-  ['A','B','C','D'].forEach(L => catDominant[L] = dominantColorOf(L, cats));
-  return { cats, counts, dominant, dominantN: bestN, catDominant };
+  const catCounts = {};
+  Object.keys(CATS).forEach(L => {
+    const d = logicDominant(rows, CATS[L].qRange[0], CATS[L].qRange[1]);
+    catDominant[L] = d.color;
+    catCounts[L] = d.counts;
+  });
+  const overall = {Pink:0, Blue:0, Yellow:0, Green:0};
+  rows.forEach(c => { if (c && overall[c] !== undefined) overall[c]++; });
+  let dominant = COLOR_ORDER[0], bestN = -1;
+  for (const c of COLOR_ORDER) { if (overall[c] > bestN) { dominant = c; bestN = overall[c]; } }
+  return { catDominant, catCounts, counts: overall, dominant, dominantN: bestN };
 }
 
 /* ================= FULL REPORT PAGE IMAGES (WebP, from the workbook) ================= */
@@ -569,61 +644,87 @@ function pieSVG(counts){
   return `<svg viewBox="0 0 200 200" style="width:240px;height:240px;" role="img" aria-label="Overview map of color selections">${segs}</svg>`;
 }
 
-function catEntriesHTML(letter, R, useQ){
-  const cat = CATS[letter];
-  const points = [];
-  if (letter === 'E') {
-    const catLetters = ['A','B','C','D'];
-    cat.pts.forEach((pt, idx) => {
-      const color = idx < 4 ? R.catDominant[catLetters[idx]] : R.dominant;
-      const e = entryFor(pt, color);
-      if(e) points.push({ color, e, label: e.t.split('\n')[0] });
-    });
-  } else {
-    cat.pts.forEach((pt, idx) => {
-      const item = R.cats[letter][idx];
-      const e = entryFor(pt, item.color);
-      if(e) points.push({ color: item.color, e, q: item.q });
-    });
-  }
-  return points.map(({color, e, q}) => `
+/* Point headings: static text from the REPORT worksheet (A185/A187/…, A229/…, etc.) */
+const POINT_TITLES = {
+  "A": ["Your current emotional posture","Your response to distance","Your comfort with closeness","Your emotional boundary","Your underlying emotional need"],
+  "B": ["Your decision rhythm","Your execution pattern","Your response to pressure","Your current focus state","Your forward movement"],
+  "C": ["Your emotional flow","Your inner dialogue","Your sense of safety","Your control orientation","Your sensitivity level"],
+  "D": ["What you are currently needing","Your energy source","Your current gap","Your ideal state","Your point of friction"],
+  "E": ["Your dominant state","Your secondary layer","Where tension exists","What your system is trying to do","Gentle direction"]
+};
+
+/* Interpretation body per original REPORT worksheet formula:
+   Categories A & B → Copy_Map columns E, F, G, H (4 paragraphs, no heading line)
+   Categories C, D, E → Copy_Map columns D, E, F, G (heading text = first body paragraph)
+   Approved manual introductions M1–M4 prepend to the FIRST point (…1) of each category. */
+function catEntryHTML(letter, idx, R){
+  const pt = CATS[letter].pts[idx];
+  const color = R.catDominant[letter];
+  const e = entryFor(pt, color);
+  if (!e) return '';
+  const paras = (letter === 'A' || letter === 'B')
+    ? [e.a, e.b, e.d, e.e]
+    : [e.t.replace(/\r?\n/g,' '), e.a, e.b, e.d];
+  const manual = (idx === 0 && MANUAL_INTRO[pt]) ? MANUAL_INTRO[pt].split(/\n\n+/) : [];
+  const allParas = manual.concat(paras);
+  return `
     <div class="rep-point ${color.toLowerCase()}">
-      <div class="pt-tone"><span class="swatch ${color.toLowerCase()}"></span>${COLOR_LABEL[color]}${q ? ' · Q' + q : ''}</div>
-      <div class="pt-head">${e.t.replace(/\r?\n/g,' ')}</div>
+      <div class="pt-tone"><span class="swatch ${color.toLowerCase()}"></span>${COLOR_LABEL[color]}</div>
+      <div class="pt-head">${POINT_TITLES[letter][idx]}</div>
       <div class="pt-body">
-        <p>${e.a}</p><p>${e.b}</p><p>${e.d}</p><p>${e.e}</p>
+        ${allParas.map(p => `<p>${p}</p>`).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
 }
 
-function buildReport(name, city, ans){
+function buildReport(name, email, ans){
   const rows = ans || answers;
   lastReportAnswers = rows;
   const R = computeReport(rows);
   const dateStr = new Date().toLocaleDateString('en-MY', {day:'numeric', month:'long', year:'numeric'});
   const dom = R.dominant;
 
-  /* per-category dominant tone short name for personalization */
   const PAGES = [];
 
-  /* ---- 1 · COVER ---- */
+  /* ---- 1 · COVER [ORIGINAL rows 4–27] ---- */
   PAGES.push(page(`
     <div class="rp-cover">
       <div class="cover-client">Prepared for ${name}<br>${dateStr}</div>
       <img src="${IMG.cover}" alt="Color Hug™ — The Lucky Clover cover">
     </div>
-    <div style="text-align:center; padding:0 36px 30px;">
-      <div class="rp-body soft" style="font-size:.9rem;">A reflection of your inner themes, in the language of colors.<br>
-      Personal Insight Report · ${city}, Malaysia · Preview reflection</div>
+    <div style="text-align:center; padding:0 36px 26px;">
+      <div class="rp-body">Each section is not a definition —<br>but a way to understand your present state with more ease and clarity.</div>
+      <div class="rp-body soft" style="margin-top:8px;">Take what resonates. Leave what doesn't.</div>
+      <div class="rp-body soft" style="font-size:.78rem; margin-top:14px;">The Color Hug™ system structure and interpretation framework are part of a proprietary design.</div>
     </div>`, false));
 
-  /* ---- 2 · INTRO ---- */
+  /* ---- 2 · INTRO [ORIGINAL rows 50–55] ---- */
   PAGES.push(page(`
     <div class="rp-pad" style="text-align:center; padding-top:56px; padding-bottom:44px;">
       <img src="${IMG.logo}" alt="Color Hug logo" style="width:340px; margin:0 auto 26px;">
-      <div class="rp-title" style="font-size:1.5rem;">This is your space<br>to understand yourself<br>a little more.</div>
-      <div class="rp-hr" style="width:180px; margin:20px auto;"></div>
-      <div class="rp-body soft">There is no right or wrong here.<br>Just a journey to see what's really you.<br>Let's begin.</div>
+      <div class="rp-title" style="font-size:1.5rem;">Emotional Orientation Reflection Report</div>
+      <div class="rp-sub">A gentle, color-based self-reflection experience</div>
+      <div class="rp-body soft" style="margin-top:22px;">This is not a personality test.<br>
+      It is a gentle reflection of where your system is leaning.</div>
+      <div class="rp-body soft" style="margin-top:14px;">The colors you are drawn to are not random —<br>
+      they often point toward what is being felt, processed, or held quietly within you.</div>
+      <div class="rp-body soft" style="margin-top:14px;">This report offers a soft, structured interpretation<br>
+      of your current emotional patterns, responses, and inner orientation.</div>
+      <div class="rp-body soft" style="margin-top:14px;">No judgment. No labels.<br>
+      Only a clearer way to see what is already present.</div>
+    </div>`, false));
+
+  /* ---- 3 · CLIENT INFORMATION [ORIGINAL rows 76–78] ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">Your Reflection</div>
+      <div class="rp-title" style="font-size:1.4rem;">Prepared For You</div>
+      <div class="rp-hr"></div>
+      <div class="client-block">
+        <div class="ci-row"><span class="ci-label">NAME</span><span class="ci-val">${name}</span></div>
+        <div class="ci-row"><span class="ci-label">EMAIL</span><span class="ci-val">${email}</span></div>
+        <div class="ci-row"><span class="ci-label">FILE DATE</span><span class="ci-val">${dateStr}</span></div>
+      </div>
     </div>`, false));
 
   /* ---- 3 · OVERVIEW MAP (pie chart) ---- */
@@ -755,10 +856,10 @@ function buildReport(name, city, ans){
       <div class="rp-quote" style="text-align:center; border-left:none; margin-top:22px;"><span class="rp-gold">You are doing better</span><br>than you think you are.</div>
     </div>`, true));
 
-  /* ---- 8 · CATEGORY PAGES (intro page before each category's readings) ---- */
+  /* ---- 8 · CATEGORY PAGES [ORIGINAL rows 163–371] — divider page, then title block + 5 points ---- */
   Object.entries(CATS).forEach(([letter, cat]) => {
     const m = CAT_PAGE_META[letter];
-    /* intro divider page */
+    /* category opening page */
     PAGES.push(page(`
       <div class="cat-page c${'ABCDE'.indexOf(letter) + 1}">
         <img class="cat-img" src="${IMG[m.img]}" alt="${cat.name}">
@@ -770,13 +871,16 @@ function buildReport(name, city, ans){
         </div>
         <div class="cat-foot">Personal Insight Report</div>
       </div>`, false));
-    /* readings page */
+    /* category content: title, subtitle, proprietary statement, 5 points */
+    let ptsHtml = '';
+    for (let i = 0; i < 5; i++) ptsHtml += catEntryHTML(letter, i, R);
     PAGES.push(page(`
       <div class="rp-pad">
-        <div class="rp-kicker">Category ${letter} · ${cat.name}</div>
+        <div class="rp-kicker">Category ${letter}</div>
         <div class="rp-title" style="font-size:1.35rem;">${cat.name}</div>
         <div class="rp-sub">${cat.sub}</div>
-        ${catEntriesHTML(letter, R)}
+        <div class="rp-body soft" style="font-size:.78rem; margin-bottom:18px;">The Color Hug™ system structure and interpretation framework are part of a proprietary design.</div>
+        ${ptsHtml}
       </div>`, true));
   });
 
@@ -819,18 +923,7 @@ function buildReport(name, city, ans){
       </div>
     </div>`, true));
 
-  /* ---- 11 · GENTLE CLOSING NOTE ---- */
-  PAGES.push(page(`
-    <div class="rp-pad">
-      <img src="${IMG.closing}" alt="A gentle closing note" style="border-radius:4px; margin-bottom:20px;">
-      <div class="rp-body" style="text-align:center;">
-        <p class="rp-violet" style="font-style:italic;">May this insight stay with you<br>as you move forward, in your own time, in your own way.</p>
-        <p>Thank you for trusting this space.<br><span class="rp-violet">Your journey matters. ♡</span></p>
-      </div>
-      <div class="site-line">Prepared with care · <b>sindee.co</b></div>
-    </div>`, false));
-
-  /* ---- 12 · FURTHER SYSTEM DIVE IN ---- */
+  /* ---- 10b · FURTHER SYSTEM DIVE IN [ORIGINAL rows 502–512] ---- */
   PAGES.push(page(`
     <div class="rp-pad">
       <div class="rp-kicker">Where This Can Go Next</div>
@@ -844,102 +937,192 @@ function buildReport(name, city, ans){
         <div class="d-t">CORE RESET™ | The Ultimate Mind Unplugged</div>
         <div class="d-d">A proprietary methodology focusing on mental clarity and core belief realignment.</div>
       </div>
-      <div class="site-line">Explore more at <b>sindee.co</b></div>
+    </div>`, true));
+
+  /* ---- 11 · GENTLE CLOSING NOTE + sindee.co [final element, exactly once] ---- */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <img src="${IMG.closing}" alt="A gentle closing note" style="border-radius:4px; margin-bottom:20px;">
+      <div class="rp-body" style="text-align:center;">
+        <p class="rp-violet" style="font-style:italic;">May this insight stay with you<br>as you move forward, in your own time, in your own way.</p>
+        <p>Thank you for trusting this space.<br><span class="rp-violet">Your journey matters. ♡</span></p>
+      </div>
+      <div class="site-line"><a href="https://sindee.co" style="color:var(--deep); text-decoration:none;"><b>sindee.co</b></a></div>
     </div>`, false));
 
-  /* render */
+  /* render — the report lives in #color-hug-report inside Report View (legacy report-area/report-empty removed) */
   document.getElementById('rep-pages').innerHTML = PAGES.join('');
-  document.getElementById('report-empty').style.display = 'none';
-  document.getElementById('report-area').style.display = 'block';
-  document.getElementById('sec-report-desc').textContent = 'Your full reflection is ready below — you may print it or simply keep what resonates. Nothing is saved or sent.';
-  document.getElementById('sec-report').scrollIntoView({behavior:'smooth'});
 }
 
-function reportPlainText(name, city, ans){
-  const rows = ans || answers;
+function reportPlainText(){
+  const rows = lastReportAnswers || answers;
   const R = computeReport(rows);
+  const name = clientName || 'Client';
+  const email = clientEmail || '';
+  const dateStr = new Date().toLocaleDateString('en-MY', {day:'numeric', month:'long', year:'numeric'});
   const lines = [];
   lines.push('COLOR HUG(TM) - THE LUCKY CLOVER');
-  lines.push('PERSONAL INSIGHT REPORT - EMOTIONAL ORIENTATION REFLECTION');
-  lines.push('Prepared for ' + name + ' (' + city + ', Malaysia)');
-  lines.push('Date: ' + new Date().toLocaleDateString('en-MY'));
+  lines.push('EMOTIONAL ORIENTATION REFLECTION REPORT');
+  lines.push('A gentle, color-based self-reflection experience');
   lines.push('');
-  lines.push('== OVERVIEW MAP ==');
+  lines.push('Each section is not a definition — but a way to understand your present state with more ease and clarity.');
+  lines.push('Take what resonates. Leave what doesn\'t.');
+  lines.push('');
+  lines.push('This is not a personality test. It is a gentle reflection of where your system is leaning.');
+  lines.push('The colors you are drawn to are not random — they often point toward what is being felt, processed, or held quietly within you.');
+  lines.push('This report offers a soft, structured interpretation of your current emotional patterns, responses, and inner orientation.');
+  lines.push('No judgment. No labels. Only a clearer way to see what is already present.');
+  lines.push('');
+  lines.push('NAME: ' + name);
+  lines.push('EMAIL: ' + email);
+  lines.push('FILE DATE: ' + dateStr);
+  lines.push('');
+  lines.push('== OVERVIEW MAP (SUPPLEMENTARY) ==');
   ['Pink','Blue','Yellow','Green'].forEach(c => lines.push(COLOR_LABEL[c] + ': ' + R.counts[c] + ' of 20'));
   lines.push('Overall tone: ' + COLOR_LABEL[R.dominant]);
   lines.push('');
-  Object.entries(CATS).forEach(([letter, cat]) => {
+  Object.keys(CATS).forEach(L => {
+    const cat = CATS[L];
     lines.push('== ' + cat.name.toUpperCase() + ' ==');
+    lines.push('(' + cat.sub + ')');
+    lines.push('The Color Hug(TM) system structure and interpretation framework are part of a proprietary design.');
     cat.pts.forEach((pt, idx) => {
-      let color, label;
-      if (letter === 'E') {
-        const cl = ['A','B','C','D'];
-        color = idx < 4 ? R.catDominant[cl[idx]] : R.dominant;
-        label = '';
-      } else {
-        const item = R.cats[letter][idx];
-        color = item.color; label = ' (Q' + item.q + ')';
-      }
+      const color = R.catDominant[L];
       const e = entryFor(pt, color);
-      if(e) lines.push(COLOR_LABEL[color] + label + ' - ' + e.t.replace(/\r?\n/g,' ') + '\n  ' + e.a + '\n  ' + e.b + '\n  ' + e.d + '\n  ' + e.e);
+      if (!e) return;
+      lines.push('');
+      lines.push(POINT_TITLES[L][idx]);
+      const paras = (L === 'A' || L === 'B') ? [e.a, e.b, e.d, e.e] : [e.t.replace(/\r?\n/g,' '), e.a, e.b, e.d];
+      const manual = (idx === 0 && MANUAL_INTRO[pt]) ? MANUAL_INTRO[pt].split(/\n\n+/) : [];
+      manual.concat(paras).forEach(p => lines.push(p));
     });
     lines.push('');
   });
-  lines.push('This report is a structured reflection, not a personality test. Non-diagnostic. Sample preview only.');
-  lines.push('sindee.co');
+  lines.push('== REPORT USAGE ==');
+  lines.push('This report is generated through a structured interpretation framework based on color preference and response patterns.');
+  lines.push('Each color reflects a different emotional tone, which is gently mapped across relational and internal dimensions to offer a clearer view of your current state.');
+  lines.push('This is not a personality test, nor is it designed to define, diagnose, or predict outcomes. It simply reflects patterns observed within the responses provided at the time.');
+  lines.push('This report is intended for personal reflection only.');
+  lines.push('It does not replace professional advice of any kind, including medical, psychological, legal, or financial matters. All interpretations are non-diagnostic and non-prescriptive.');
+  lines.push('Any decisions made based on this report remain the sole responsibility of the individual.');
+  lines.push('The system offers structured reflections — not instructions, guarantees, or fixed conclusions.');
+  lines.push('');
+  lines.push('== HOW TO READ THIS REPORT ==');
+  lines.push('This report is designed to be read gently — not as something to analyze, but something to notice.');
+  lines.push('You may find that some parts feel very accurate, while others feel less familiar. That is completely natural.');
+  lines.push('Each section reflects a different way your system may be relating, responding, or holding experiences at this moment.');
+  lines.push('Read it as a reflection, not a definition: Nothing here is fixed. This is not a label, and it is not a conclusion about who you are. It is simply a snapshot — a way to see how things may be moving within you right now.');
+  lines.push('Move through it at your own pace: There is no need to rush. You can read everything at once, or return to certain sections over time. Sometimes, clarity doesn\'t come from reading more — but from letting a few lines settle.');
+  lines.push('Notice what feels familiar: If something resonates, it may already be something you\'ve been feeling — just not fully put into words. You don\'t need to force agreement. A small sense of recognition is enough.');
+  lines.push('Let it stay light: You don\'t need to change anything immediately. This report is not asking you to act, fix, or decide. It simply offers a clearer view — so that when you do move forward, you\'re doing so with a bit more awareness.');
+  lines.push('A gentle note: You are not behind. Your system is not doing anything wrong. It is simply adjusting, in the way it knows how. And sometimes, seeing it more clearly is already enough.');
+  lines.push('');
+  lines.push('== FURTHER SYSTEM DIVE IN ==');
+  lines.push('Emotion-Sync Metric(TM) | Module 1: Stabilization');
+  lines.push('Emotion-Sync Metric(TM) (ESM(TM)) is a structured state-mapping framework built around eight functional dimensions. By integrating self-reported indicators of physiological activation and cognitive load, ESM(TM) identifies the system\'s current Primary Load Driver — offering a structured perspective on energy distribution and operational patterns.');
+  lines.push('EXCLUSIVE');
+  lines.push('CORE RESET(TM) | The Ultimate Mind Unplugged');
+  lines.push('A proprietary methodology focusing on mental clarity and core belief realignment.');
+  lines.push('');
+  lines.push('https://sindee.co');
   return lines.join('\n');
 }
 
 document.getElementById('print-btn').addEventListener('click', () => window.print());
+
 document.getElementById('copy-btn').addEventListener('click', async () => {
-  const name = document.querySelector('.rep-meta b').textContent;
+  const htmlText = document.getElementById('color-hug-report').innerHTML;
+  const plain = reportPlainText();
   try {
-    await navigator.clipboard.writeText(reportPlainText(name, 'Malaysia', lastReportAnswers));
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([htmlText], {type: 'text/html'}),
+          'text/plain': new Blob([plain], {type: 'text/plain'})
+        })
+      ]);
+    } else {
+      await navigator.clipboard.writeText(plain);
+    }
     const b = document.getElementById('copy-btn');
-    b.textContent = 'Copied ✓'; setTimeout(() => b.textContent = 'Copy Report Text', 1800);
-  } catch(err) { alert('Copy not available in this browser — please use Print instead.'); }
-});
-
-/* ================= INIT (never opens empty) ================= */
-buildQuestions();
-updateScore();
-/* A worked sample reflection is shown on load so the page never opens empty.
-   It is rendered, then gently hidden again — the section shows the invitation text
-   until the client prepares their own reading. */
-try {
-  buildReport(SAMPLE_ROWS[0].name, SAMPLE_ROWS[0].city, SAMPLE_ROWS[0].answers);
-} catch (e) { /* keep the page usable even if sample rendering fails */ }
-document.getElementById('report-area').style.display = 'none';
-document.getElementById('report-empty').style.display = 'block';
-document.getElementById('sec-report-desc').textContent = 'Your personal reading appears here, ready whenever you have completed your choices.';
-
-/* ---------- gentle acknowledgement + final lock ---------- */
-const ackBox = document.getElementById('ack-box');
-const ackCheck = document.getElementById('ack-check');
-const ackContinue = document.getElementById('ack-continue');
-const qOverlayFinal = document.getElementById('q-overlay-final');
-
-document.getElementById('gen-report').addEventListener('click', () => {
-  /* first press: offer the gentle acknowledgement instead of generating immediately */
-  if (ackBox.style.display !== 'block') {
-    ackBox.style.display = 'block';
-    ackBox.scrollIntoView({behavior:'smooth'});
-    return;
+    b.textContent = 'Your full report has been copied successfully.';
+    setTimeout(() => b.textContent = 'Copy Full Report', 2600);
+  } catch(err) {
+    /* plain-text fallback for browsers without clipboard HTML support */
+    try {
+      await navigator.clipboard.writeText(plain);
+      const b = document.getElementById('copy-btn');
+      b.textContent = 'Your full report has been copied successfully.';
+      setTimeout(() => b.textContent = 'Copy Full Report', 2600);
+    } catch(e2) { alert('Copying is not available in this browser — please use Print Report and choose Save as PDF instead.'); }
   }
 });
 
-ackCheck.addEventListener('change', () => { ackContinue.disabled = !ackCheck.checked; });
+/* ================= INIT + SUBMISSION FLOW ================= */
+buildQuestions();
+updateScore();
 
-ackContinue.addEventListener('click', () => {
-  /* prepare the reading from the held answers */
-  sealed = true;
-  buildReport('Your Session (sample preview)', 'Kuala Lumpur', answers);
+/* client information (memory only — never stored, never sent) */
+let clientName = '';
+let clientEmail = '';
+const nameInput = document.getElementById('client-name');
+const emailInput = document.getElementById('client-email');
+const clientMsg = document.getElementById('client-msg');
 
-  /* the questionnaire now fully closes — answers are held, not editable */
-  document.getElementById('sec-quest').classList.add('sealed');
-  qOverlayFinal.style.display = 'flex';
-  ackBox.style.display = 'none';
-  document.getElementById('gen-report').disabled = true;
+function clientInfoValid(){
+  clientName = nameInput.value.trim();
+  clientEmail = emailInput.value.trim();
+  if (!clientName) { clientMsg.textContent = 'Please add your name so your reflection can be prepared for you.'; clientMsg.style.display = 'block'; nameInput.focus(); return false; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) { clientMsg.textContent = 'Please add a valid email address for your report.'; clientMsg.style.display = 'block'; emailInput.focus(); return false; }
+  clientMsg.style.display = 'none';
+  return true;
+}
+
+/* ---------- Gentle Reminder dialog ---------- */
+const gentleDialog = document.getElementById('gentle-dialog');
+const qView = document.getElementById('questionnaire-view');
+const rView = document.getElementById('report-view');
+
+document.getElementById('gen-report').addEventListener('click', () => {
+  if (sealed) return;
+  if (!clientInfoValid()) return;
+  if (answers.some(a => !a)) return;   // belt & suspenders — button is disabled until 20 answered
+  gentleDialog.style.display = 'flex';
+});
+
+document.getElementById('btn-review').addEventListener('click', () => {
+  /* Review My Responses: answers preserved, nothing finalized */
+  gentleDialog.style.display = 'none';
+  document.getElementById('sec-quest').scrollIntoView({behavior:'smooth'});
+});
+
+document.getElementById('btn-confirm').addEventListener('click', () => {
+  /* Confirm & Generate My Report — execution order per spec:
+     1. validate  2. compute dominants  3. resolve 25 points  4. generate + render
+     5. VERIFY render succeeded  6. finalize/lock  7. hide questionnaire  8. show Report View */
+  if (sealed) return;                                   // duplicate submission prevention
+  if (!clientInfoValid()) { gentleDialog.style.display = 'none'; return; }
+  if (answers.some(a => !a)) { gentleDialog.style.display = 'none'; return; }
+  try {
+    buildReport(clientName, clientEmail, answers);      // steps 2–4: generation + DOM render
+    /* step 5: verify render — report container must hold all 22 pages and 25 points */
+    const rendered = document.getElementById('rep-pages');
+    const pageOK = rendered.children.length === 22;
+    const pointsOK = rendered.querySelectorAll('.pt-head').length === 25;
+    if (!pageOK || !pointsOK) { throw new Error('render verification failed: pages=' + rendered.children.length + ' points=' + rendered.querySelectorAll('.pt-head').length); }
+    /* steps 6–8: only after verified success — finalize, lock, hide, switch */
+    sealed = true;                                      // LOCK: finalized for this session
+    qView.style.display = 'none';                       // HIDE questionnaire entirely
+    rView.style.display = 'block';                      // REPORT VIEW
+    gentleDialog.style.display = 'none';
+    document.getElementById('sec-report').scrollIntoView({behavior:'smooth'});
+  } catch (e) {
+    /* safe retry: answers preserved, session NOT finalized, questionnaire still editable */
+    sealed = false;
+    gentleDialog.style.display = 'none';
+    console.error('[COLOR HUG] report generation failed:', e);   // technical details: development console only
+    alert('Something interrupted the preparation of your reflection. Your answers are safely held — please try again.');
+  }
 });
 </script>
 </body>
