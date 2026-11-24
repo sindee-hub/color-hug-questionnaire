@@ -35,6 +35,9 @@
   .btn-ghost{background:transparent; color:var(--deep); border:1px solid var(--deep);}
   .confirm-msg{font-size:.92rem; color:#5c6e62; margin-top:14px; font-style:italic;}
 
+  .rp-legal-intro{page-break-inside:avoid;}
+  .colorhug-legal-adaptation-paragraph{break-inside:avoid; page-break-inside:avoid;}
+  .rp-legal-intro p{margin-bottom:10px;}
   /* ---------- report client-information block (REPORT rows 76-78) ---------- */
   .client-block{margin-top:6px;}
   .ci-row{display:flex; gap:18px; padding:10px 0; border-bottom:1px solid var(--line);}
@@ -131,13 +134,16 @@
   .rp-body p{margin-bottom:12px;}
   .rp-body .soft{color:var(--ink-soft);}
   .rp-hr{border:none; border-top:1px solid var(--line); margin:18px 0;}
+  .rp-list{margin:0 0 12px 22px;}
+  .rp-list li{margin-bottom:6px; line-height:1.7;}
   .rp-h4{font-size:1.05rem; color:var(--deep); letter-spacing:.5px; margin:22px 0 8px; font-weight:400;}
   .rp-quote{background:#f7f4f0; border-left:2px solid var(--accent); padding:14px 18px; font-style:italic; color:var(--ink-soft); font-size:.92rem; margin:14px 0;}
   .rp-gold{color:#a4862f;}
   .rp-violet{color:#9b7bb8;}
-  .rp-footer{border-top:1px solid var(--line); padding:12px 36px; display:flex; justify-content:space-between; font-size:.68rem; letter-spacing:1.5px; color:var(--ink-soft); text-transform:uppercase;}
-  .rp-2col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
-  .rp-card{border:1px solid var(--line); border-radius:4px; padding:18px 20px; background:#fff;}
+  .rp-footer{border-top:1px solid var(--line); padding:12px 36px; display:flex; justify-content:space-between; align-items:center; font-size:.68rem; letter-spacing:1.5px; color:var(--ink-soft); text-transform:uppercase;}
+  .rp-footer-sep{color:var(--line); padding:0 8px;}
+  .rp-2col{display:grid; grid-template-columns:1fr 1fr; gap:16px; page-break-inside:avoid;}
+  .rp-card{border:1px solid var(--line); border-radius:4px; padding:18px 20px; background:#fff; page-break-inside:avoid;}
   .rp-card h5{font-size:.95rem; margin-bottom:2px; font-weight:400; letter-spacing:1px;}
   .rp-card .csub{font-size:.8rem; font-style:italic; color:var(--ink-soft); margin-bottom:10px;}
   .rp-card ul{list-style:none; margin:0; padding:0;}
@@ -148,7 +154,7 @@
   .card-blue{background:#f1f5f9;} .card-blue h5{color:#6f94b8;} .card-blue .bestline{color:#6f94b8;}
   .card-yellow{background:#fdf8ec;} .card-yellow h5{color:#c9a23a;} .card-yellow .bestline{color:#c9a23a;}
   .card-green{background:#f2f7f1;} .card-green h5{color:#7ba26b;} .card-green .bestline{color:#7ba26b;}
-  .cat-page{position:relative; min-height:430px; display:flex;}
+  .cat-page{position:relative; min-height:430px; display:flex; page-break-before:always; page-break-inside:avoid;}
   .cat-page .cat-img{width:52%; object-fit:cover; object-position:top;}
   .cat-page .cat-side{flex:1; padding:44px 34px; display:flex; flex-direction:column; justify-content:center;}
   .cat-num{font-size:3.2rem; font-weight:400; letter-spacing:2px; margin-bottom:6px;}
@@ -251,6 +257,9 @@
       </div>
       <div class="confirm-msg" id="gate-confirm-msg" style="display:none;">The questionnaire below is now open for you.</div>
       <div class="gate-note">Kindly note — this is a <strong>preview experience</strong> only. Nothing is saved between visits; your reflections live on this screen alone, and this sample is not an official or paid report.</div>
+      <div class="gate-note" style="margin-top:10px;">
+        <strong>Analytics notice:</strong> this website uses Cloudflare Web Analytics, a privacy-friendly, cookie-free visitor measurement service, to count anonymous page views and general traffic trends (such as referrers, approximate regions, and device types). No personal information is collected through it — your name, email, questionnaire answers, and report contents are never measured, stored, or transmitted by analytics. Details of Cloudflare's data handling are available at cloudflare.com/web-analytics. Analytics can be declined by blocking the domain <em>cloudflareinsights.com</em> in your browser.
+      </div>
     </div>
   </section>
 
@@ -344,7 +353,27 @@
   </div><!-- /report-view -->
 </div><!-- /wrap -->
 
+<!-- Cloudflare Web Analytics -->
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "779ecfa6f7544874bf83313b19e44fde"}'></script>
+<!-- End Cloudflare Web Analytics -->
+
 <script>
+/* ================= ANALYTICS EVENT INTERFACE (modular, privacy-minimal) =================
+   Cloudflare Web Analytics is a page-view beacon only — it does NOT support custom conversion
+   events. The interface below dispatches named events to a local, in-memory log only.
+   No event data is transmitted externally. If a future provider supports custom events,
+   connect it inside `sendEvent` — nothing else needs to change. */
+const EVENT_LOG = [];   // in-memory only; cleared on refresh; never persisted, never sent
+function trackEvent(name){
+  EVENT_LOG.push({ event: name, at: Date.now() });
+}
+/* Wire the approved conversion points to their local dispatch (no external transmission) */
+window.addEventListener('DOMContentLoaded', () => { trackEvent('page_view'); });
+document.getElementById('unlock-btn').addEventListener('click', () => trackEvent('questionnaire_unlocked'));
+document.getElementById('gen-report').addEventListener('click', () => {
+  if (!sealed) trackEvent('questionnaire_completed');
+});
+
 /* ================= DATA (extracted from the Color Hug™ Logic Engine workbook) ================= */
 const QUESTIONS = [{q:1,t:"In connection, you currently feel closer to:"},
 {q:2,t:"When someone feels distant, your inner response is closer to:"},
@@ -619,7 +648,7 @@ const CAT_PAGE_META = {
 const PIE_COLORS = {Pink:"#e9b6c2", Blue:"#b9d1e4", Yellow:"#efe0a8", Green:"#bfd9b8"};
 
 function page(innerHTML, footer){
-  return `<div class="rp">${innerHTML}${footer ? `<div class="rp-footer"><span>Color Hug™ · The Lucky Clover</span><span>Personal Insight Report</span></div>` : ''}</div>`;
+  return `<div class="rp">${innerHTML}${footer ? `<div class="rp-footer"><span>Color Hug™ · The Lucky Clover</span><span class="rp-footer-sep" aria-hidden="true">|</span><span>Personal Insight Report</span></div>` : ''}</div>`;
 }
 
 function pieSVG(counts){
@@ -875,7 +904,7 @@ function buildReport(name, email, ans){
     let ptsHtml = '';
     for (let i = 0; i < 5; i++) ptsHtml += catEntryHTML(letter, i, R);
     PAGES.push(page(`
-      <div class="rp-pad">
+      <div class="rp-pad" data-report-category="${letter}">
         <div class="rp-kicker">Category ${letter}</div>
         <div class="rp-title" style="font-size:1.35rem;">${cat.name}</div>
         <div class="rp-sub">${cat.sub}</div>
@@ -898,6 +927,54 @@ function buildReport(name, email, ans){
         <p>It does not replace professional advice of any kind, including medical, psychological, legal, or financial matters. All interpretations are non-diagnostic and non-prescriptive.</p>
         <p>Any decisions made based on this report remain the sole responsibility of the individual.</p>
         <p>The system offers structured reflections — not instructions, guarantees, or fixed conclusions.</p>
+      </div>
+    </div>`, true));
+
+  /* ---- 9b · COPYRIGHT & USAGE RESTRICTIONS [approved legal statement] ---- */
+  const RIGHTS_HOLDER = 'sindee.co';   /* CONFIRM before publication — placeholder = site branding only */
+  PAGES.push(page(`
+    <div class="rp-pad">
+      <div class="rp-kicker">Legal Notice</div>
+      <div class="rp-title">Copyright &amp; Usage Restrictions</div>
+      <div class="rp-body">
+        <div class="rp-legal-intro">
+        <p><strong>© 2026 ${RIGHTS_HOLDER}. All Rights Reserved.</strong></p>
+        <p>COLOR HUG™ — The Lucky Clover is an original, proprietary color-based self-reflection framework.</p>
+        <p>The original written content, questionnaire materials, interpretation texts, report layouts, visual designs, and proprietary framework documentation associated with COLOR HUG™ are protected intellectual property to the extent provided by applicable law.</p>
+        </div>
+        <div class="rp-h4">Ownership &amp; Limited License</div>
+        <p>This report is provided exclusively to its named recipient for personal, private, non-commercial reflection and reference.</p>
+        <p>The recipient receives a limited, non-exclusive, non-transferable license to access, read, print, and retain personal copies of the completed report.</p>
+        <p>Purchase, payment, access, or receipt of this report does not transfer ownership of any intellectual property or grant a license for commercial exploitation.</p>
+        <div class="rp-h4">Restrictions on Reproduction &amp; Distribution</div>
+        <p>Except as expressly authorized in writing by the rights holder or permitted by applicable law, no part of this report may be:</p>
+        <ul class="rp-list">
+          <li>Reproduced or republished for third-party use.</li>
+          <li>Distributed, shared publicly, or made available for public download.</li>
+          <li>Resold, sublicensed, rented, or commercially transferred.</li>
+          <li>Uploaded to commercial content libraries, training datasets, or publicly accessible repositories.</li>
+          <li>Incorporated into third-party publications, courses, workshops, applications, assessment tools, or commercial services.</li>
+        </ul>
+        <div class="rp-h4">Restrictions on Adaptation &amp; Commercial Reuse</div>
+        <p class="colorhug-legal-adaptation-paragraph">Unauthorized copying, translation, adaptation, modification, or creation of derivative works based on protected COLOR HUG™ materials is prohibited to the extent permitted by applicable law.</p>
+        <p>The report's original interpretation texts, questionnaire wording, visual assets, and protected report designs must not be reproduced or repackaged as another commercial product or service without prior written authorization.</p>
+        <div class="rp-h4">Assessment Materials &amp; Proprietary Framework</div>
+        <p>The underlying assessment documentation, original content mappings, interpretation libraries, and proprietary scoring documentation are not licensed for extraction, redistribution, or commercial reuse.</p>
+        <p>Access to a completed report does not grant permission to reproduce protected source materials, extract proprietary content libraries, or use confidential materials obtained without authorization.</p>
+        <p>Nothing in this notice claims exclusive ownership of general ideas, colors, psychological concepts, independently developed methods, or other material that is not protected by applicable law.</p>
+        <div class="rp-h4">Brand Identity &amp; Attribution</div>
+        <p>COLOR HUG™ and The Lucky Clover are used as identifiers of the original framework and its associated materials.</p>
+        <p>No permission is granted to represent an unrelated product, service, or assessment as being created, endorsed, licensed, or approved by the COLOR HUG™ rights holder.</p>
+        <p>The ™ symbol indicates a trademark claim and does not, by itself, represent registered trademark status.</p>
+        <div class="rp-h4">Unauthorized Use</div>
+        <p>Unauthorized use of protected content may result in requests for removal, cessation of use, or other remedies available under applicable law.</p>
+        <p>The rights holder reserves the right to enforce applicable intellectual property rights.</p>
+        <div class="rp-h4">Reservation of Rights</div>
+        <p>All rights not expressly granted are reserved.</p>
+        <p>No implied commercial license is created through purchase, access, or possession of this report.</p>
+        <div class="rp-h4">Licensing &amp; Permissions</div>
+        <p>For written permission, commercial licensing, or authorized collaboration enquiries, please visit:</p>
+        <p><a href="https://sindee.co" style="color:var(--deep);"><b>sindee.co</b></a></p>
       </div>
     </div>`, true));
 
@@ -942,12 +1019,10 @@ function buildReport(name, email, ans){
   /* ---- 11 · GENTLE CLOSING NOTE + sindee.co [final element, exactly once] ---- */
   PAGES.push(page(`
     <div class="rp-pad">
-      <img src="${IMG.closing}" alt="A gentle closing note" style="border-radius:4px; margin-bottom:20px;">
-      <div class="rp-body" style="text-align:center;">
-        <p class="rp-violet" style="font-style:italic;">May this insight stay with you<br>as you move forward, in your own time, in your own way.</p>
-        <p>Thank you for trusting this space.<br><span class="rp-violet">Your journey matters. ♡</span></p>
+      <div class="rp-closing" style="page-break-inside:avoid;">
+      <img src="${IMG.closing}" alt="A gentle closing note — Color Hug™ · The Lucky Clover" style="border-radius:4px;">
+      <div class="site-line" style="margin-top:14px;"><a href="https://sindee.co" style="color:var(--deep); text-decoration:none;"><b>sindee.co</b></a></div>
       </div>
-      <div class="site-line"><a href="https://sindee.co" style="color:var(--deep); text-decoration:none;"><b>sindee.co</b></a></div>
     </div>`, false));
 
   /* render — the report lives in #color-hug-report inside Report View (legacy report-area/report-empty removed) */
@@ -1007,6 +1082,19 @@ function reportPlainText(){
   lines.push('Any decisions made based on this report remain the sole responsibility of the individual.');
   lines.push('The system offers structured reflections — not instructions, guarantees, or fixed conclusions.');
   lines.push('');
+  lines.push('== COPYRIGHT & USAGE RESTRICTIONS ==');
+  lines.push('© 2026 sindee.co. All Rights Reserved.');
+  lines.push('COLOR HUG(TM) - The Lucky Clover is an original, proprietary color-based self-reflection framework.');
+  lines.push('The original written content, questionnaire materials, interpretation texts, report layouts, visual designs, and proprietary framework documentation associated with COLOR HUG(TM) are protected intellectual property to the extent provided by applicable law.');
+  lines.push('This report is provided exclusively to its named recipient for personal, private, non-commercial reflection and reference. The recipient receives a limited, non-exclusive, non-transferable license to access, read, print, and retain personal copies of the completed report. Purchase, payment, access, or receipt of this report does not transfer ownership of any intellectual property or grant a license for commercial exploitation.');
+  lines.push('Except as expressly authorized in writing by the rights holder or permitted by applicable law, no part of this report may be reproduced or republished for third-party use; distributed, shared publicly, or made available for public download; resold, sublicensed, rented, or commercially transferred; uploaded to commercial content libraries, training datasets, or publicly accessible repositories; or incorporated into third-party publications, courses, workshops, applications, assessment tools, or commercial services.');
+  lines.push('Unauthorized copying, translation, adaptation, modification, or creation of derivative works based on protected COLOR HUG(TM) materials is prohibited to the extent permitted by applicable law. The report\'s original interpretation texts, questionnaire wording, visual assets, and protected report designs must not be reproduced or repackaged as another commercial product or service without prior written authorization.');
+  lines.push('The underlying assessment documentation, original content mappings, interpretation libraries, and proprietary scoring documentation are not licensed for extraction, redistribution, or commercial reuse. Access to a completed report does not grant permission to reproduce protected source materials, extract proprietary content libraries, or use confidential materials obtained without authorization. Nothing in this notice claims exclusive ownership of general ideas, colors, psychological concepts, independently developed methods, or other material that is not protected by applicable law.');
+  lines.push('COLOR HUG(TM) and The Lucky Clover are used as identifiers of the original framework and its associated materials. No permission is granted to represent an unrelated product, service, or assessment as being created, endorsed, licensed, or approved by the COLOR HUG(TM) rights holder. The TM symbol indicates a trademark claim and does not, by itself, represent registered trademark status.');
+  lines.push('Unauthorized use of protected content may result in requests for removal, cessation of use, or other remedies available under applicable law. The rights holder reserves the right to enforce applicable intellectual property rights.');
+  lines.push('All rights not expressly granted are reserved. No implied commercial license is created through purchase, access, or possession of this report.');
+  lines.push('For written permission, commercial licensing, or authorized collaboration enquiries, please visit: https://sindee.co');
+  lines.push('');
   lines.push('== HOW TO READ THIS REPORT ==');
   lines.push('This report is designed to be read gently — not as something to analyze, but something to notice.');
   lines.push('You may find that some parts feel very accurate, while others feel less familiar. That is completely natural.');
@@ -1028,7 +1116,7 @@ function reportPlainText(){
   return lines.join('\n');
 }
 
-document.getElementById('print-btn').addEventListener('click', () => window.print());
+document.getElementById('print-btn').addEventListener('click', () => { trackEvent('print_report_clicked'); window.print(); });
 
 document.getElementById('copy-btn').addEventListener('click', async () => {
   const htmlText = document.getElementById('color-hug-report').innerHTML;
@@ -1044,6 +1132,7 @@ document.getElementById('copy-btn').addEventListener('click', async () => {
     } else {
       await navigator.clipboard.writeText(plain);
     }
+    trackEvent('copy_report_success');
     const b = document.getElementById('copy-btn');
     b.textContent = 'Your full report has been copied successfully.';
     setTimeout(() => b.textContent = 'Copy Full Report', 2600);
@@ -1051,6 +1140,7 @@ document.getElementById('copy-btn').addEventListener('click', async () => {
     /* plain-text fallback for browsers without clipboard HTML support */
     try {
       await navigator.clipboard.writeText(plain);
+      trackEvent('copy_report_success');
       const b = document.getElementById('copy-btn');
       b.textContent = 'Your full report has been copied successfully.';
       setTimeout(() => b.textContent = 'Copy Full Report', 2600);
@@ -1105,11 +1195,23 @@ document.getElementById('btn-confirm').addEventListener('click', () => {
   if (answers.some(a => !a)) { gentleDialog.style.display = 'none'; return; }
   try {
     buildReport(clientName, clientEmail, answers);      // steps 2–4: generation + DOM render
-    /* step 5: verify render — report container must hold all 22 pages and 25 points */
+    /* step 5: verify render — structural DOM checks (entity-safe, no hardcoded page count) */
     const rendered = document.getElementById('rep-pages');
-    const pageOK = rendered.children.length === 22;
     const pointsOK = rendered.querySelectorAll('.pt-head').length === 25;
-    if (!pageOK || !pointsOK) { throw new Error('render verification failed: pages=' + rendered.children.length + ' points=' + rendered.querySelectorAll('.pt-head').length); }
+    /* the five approved category sections carry data-report-category attributes */
+    const renderedCategories = new Set(
+      [...rendered.querySelectorAll('[data-report-category]')].map(el => el.dataset.reportCategory)
+    );
+    const categoriesOK = ['A','B','C','D','E'].every(id => renderedCategories.has(id));
+    /* legal + final checks via stable attributes/content */
+    const legalOK = rendered.textContent.includes('Copyright & Usage Restrictions');
+    const finalOK = [...rendered.querySelectorAll('.site-line a')].some(a => a.getAttribute('href') === 'https://sindee.co');
+    if (!pointsOK || !categoriesOK || !legalOK || !finalOK) {
+      throw new Error('render verification failed: points=' + rendered.querySelectorAll('.pt-head').length +
+        ' categories=' + [...renderedCategories].join(',') + ' legal=' + legalOK + ' final=' + finalOK);
+    }
+    trackEvent('report_generated');                     // fires only after verified success
+    document.body.setAttribute('data-ch', '07-verified');
     /* steps 6–8: only after verified success — finalize, lock, hide, switch */
     sealed = true;                                      // LOCK: finalized for this session
     qView.style.display = 'none';                       // HIDE questionnaire entirely
@@ -1120,8 +1222,8 @@ document.getElementById('btn-confirm').addEventListener('click', () => {
     /* safe retry: answers preserved, session NOT finalized, questionnaire still editable */
     sealed = false;
     gentleDialog.style.display = 'none';
-    console.error('[COLOR HUG] report generation failed:', e);   // technical details: development console only
-    alert('Something interrupted the preparation of your reflection. Your answers are safely held — please try again.');
+    console.error('[COLOR HUG] REPORT GENERATION FAILED', e, e && e.stack);   // technical details: development console only
+    /* TEMP DIAGNOSTIC */ document.title = '[DIAG] ' + (e && e.message ? e.message : String(e)); alert('[DIAG] see tab title');
   }
 });
 </script>
